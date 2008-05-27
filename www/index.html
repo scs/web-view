@@ -1,0 +1,90 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="de">
+<head>
+	<title>OSCaR Demo</title>
+	<link rel="stylesheet" type="text/css" href="fcd.css" />
+
+	<script language="javascript" src="fcd.js"></script>
+</head>
+<body onLoad="javascript: onLoad()">
+
+<div id="navigation">
+	<div id="logo"><img id="logoImage" src="scslogo.gif" alt="SCS Logo" /></div>
+	<div id="controls">
+	</div>
+	<div id="brightnessControl">
+	    <h2>Brightness Control</h2>
+	    <div id="exposure">
+	        <h3>Exposure</h3>
+		    <span id="expTime">
+		    <p>
+		        <label for="curExpTime">Current Exposure:</label>
+			<span name="curExpTime" id="curExpTime">0.0</span>ms
+		    </p>
+		    <span id="autoExpTimeContainer">
+		    <p>
+			<label for="maxExpTime">Max Exposure:</label>
+			<img src="up.gif" width="20" height="20" alt="inc" onClick="modParam('maxExpTime', 1, 0, 9999)" />
+			<input name="maxExpTime" id="maxExpTime" type="text" maxlength="4" size="4" value="50" />&nbsp;ms
+			<img src="down.gif" width="20" height="20" alt="inc" onClick="modParam('maxExpTime', -1, 0, 9999)" />
+		    </p>
+		    </span>
+		    <span id="manExpTimeContainer">
+		    <p>
+			<label for="manExpTime">Exposure time:</label>
+			<img src="up.gif" width="20" height="20" alt="inc" onClick="modParam('manExpTime', 1, 0, 9999)" />
+			<input name="manExpTime" id="manExpTime" type="text" maxlength="4" size="4" value="50" />&nbsp;ms
+			<img src="down.gif" width="20" height="20" alt="inc" onClick="modParam('manExpTime', -1, 0, 9999)" />
+		    </p>
+		    </span>
+		    <p>
+			<label for="autoExposure">Auto-Exposure:</label>
+			<input type="checkbox" onClick="javascript: onChangeAutoExp()" checked="checked" id="autoExposure" name="autoExposure" />
+		    </p>
+	    </div>
+	    <div id="gain">
+	        <h3>Gain</h3>
+		    <span id="Gain Factor">
+		    <p>
+		        <label for="curGainFactor">Current Gain Factor:</label>
+			<span name="curGainFactor" id="curGainFactor">1.0</span>
+		    </p>
+		    <span id="autoGainFactorContainer">
+		    <p>
+			<label for="maxGainFactor">Max Gain Factor:</label>
+			<img src="up.gif" width="20" height="20" alt="inc" onClick="modParam('maxGainFactor', 0.2, 0.2, 4.0)" />
+			<input name="maxGainFactor" id="maxGainFactor" type="text" maxlength="4" size="4" value="1.0" />
+			<img src="down.gif" width="20" height="20" alt="dec" onClick="modParam('maxGainFactor', -0.2, 0.2, 4.0)"/>
+		    </p>
+		    </span>
+		    <span id="manGainFactorContainer">
+		    <p>
+			<label for="manGainFactor">Gain Factor:</label>
+			<img src="up.gif" width="20" height="20" alt="inc" onClick="modParam('manGainFactor', 0.2, 0.2, 4.0)" />
+			<input name="manGainFactor" id="manGainFactor" type="text" maxlength="4" size="4" value="1.0" />
+			<img src="down.gif" width="20" height="20" alt="dec" onClick="modParam('manGainFactor', -0.2, 0.2, 4.0)"/>
+		    </p>
+		    </span>
+		    <p>
+			<label for="autoGain">Auto-Gain:</label>
+			<input type="checkbox" onClick="javascript: onChangeAutoGain()" checked="checked" id="autoGain" name="autoGain" />
+		    </p>
+	    </div>
+	</div>
+</div>
+
+<div id="content">
+<h2 id="liveFeed">Live-Feed</h2>
+<img id="liveImage" src="live.bmp?TS=0" width="752" height="480" alt="Live-Feed" />
+</div>
+
+<input id="mode" type="hidden" value="0" />
+<div id="param1" class="paramContainer"></div>
+<div id="param2" class="paramContainer"></div>
+<div id="param3" class="paramContainer"></div>
+<div id="param4" class="paramContainer"></div>
+<div id="param5" class="paramContainer"></div>
+</body>
+</html>

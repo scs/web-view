@@ -1,0 +1,136 @@
+body 
+{
+  font: 100% arial, helvetica, sans-serif;
+  color: #555;
+  margin: 0;
+  }
+
+h1, h2 
+{
+  margin: 0;
+  }		
+
+#navigation
+{
+  position: absolute;
+  left: 1em;
+  width: 25em;
+  background-color: #fff;
+  }
+
+#navigation label
+{
+  float: left;
+  display: inline;
+  width: 10em;
+}
+
+#controls
+{ 
+  height: 8em;
+ }
+
+#steps 
+{
+  height: 15em;
+  }
+
+#navigation div
+{ 
+  margin-top: 2.5em;
+  margin: 0.5em 0.5em 0.5em 0.5em;
+  padding: 0.25em 0.25em 0.25em 0.25em;
+  background-color: #efe0df;
+  }
+
+#logo
+{ 
+  text-align: center;
+  background-color: #fff;
+  }
+
+#logoImage
+{ 
+  width: 16em;
+  margin: 0.5em 0.5em 0.5em 0.5em
+}
+.parameterValue 
+{
+  position: absolute;
+  left: 26em;
+  color: black;
+  }
+
+ul 
+{
+  list-style-type: square;
+	color: red;
+  }
+
+.parameterName {
+                 line-height: 2em;
+                 color: black;
+                 }
+
+.statValue 
+{
+  color: black;
+  position: absolute;
+  left: 27.5em;
+  }
+
+.statName
+{
+	color: black;
+  }
+
+#content 
+{
+  position: relative;
+  margin-left: 26.5em;
+  margin-top: 0.5em;
+  border-style: solid;
+  border-color: #efe0df;
+  border-width: 2px;
+  padding: 0.5em;
+  width: 48em;
+  height: 32.25em;
+  }
+
+
+h2
+{
+  background: #efe0df;
+  }
+
+h3 
+{
+  font: 1.25em arial, helvetica, sans-serif;
+  font-weight: bold;
+  }
+
+/* Due to bug in IE, we cannot place real h3's alongside each other. */
+.h3equivalent
+{
+  font: 1.25em arial, helvetica, sans-serif;
+  font-weight: bold;
+  }
+
+.paramContainer
+{ 
+  display: none;
+  position: absolute;
+  top: 0.0em;
+  left: 0.0em;
+  width: 10em;
+  height: 5em;
+ }
+
+#manExpTimeContainer
+{ 
+  display: none;
+}
+#manGainFactorContainer
+{ 
+  display: none;
+}
