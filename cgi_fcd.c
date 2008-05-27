@@ -241,6 +241,9 @@ int main()
 	LCVLog(ERROR, "%s: Unable to set area of interest! (%d)\n",
 	       APP_NAME, err);
       }
+
+     LCVCamSetupPerspective( LCV_CAM_PERSPECTIVE_DEFAULT);
+
 #if defined(LCV_HOST) || defined(LCV_SIM)
     /* Create a file reader to load in the test images and
      * apply it to the camera module. */
