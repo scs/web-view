@@ -45,10 +45,8 @@ target: $(SOURCES) inc/*.h lib/liblcv_target.a $(WEB_FILES)
 	cp $(OUT)$(TARGET_SUFFIX) /tftpboot/$(OUT)
 	@mkdir -p www/cgi-bin
 	@cp $(OUT)$(TARGET_SUFFIX) www/cgi-bin/$(OUT)
-#	@mkdir -p ../../uclinux-dist/user/blkfin-apps/lcv-sht-cgi/web/
-#	cp -r www/* ../../uclinux-dist/user/blkfin-apps/lcv-sht-cgi/web/
-	tar cf www.tar -C www .
-	cp www.tar /tftpboot
+	tar cfz www.tar.gz -C www .
+	cp www.tar.gz /tftpboot
 
 targetdbg: $(SOURCES) inc/*.h lib/liblcv_target.a $(WEB_FILES)
 	@echo "Compiling for target.."
@@ -67,7 +65,7 @@ host: $(SOURCES) inc/*.h lib/liblcv_host.a  $(WEB_FILES) $(EMU_FILES)
 	cp www/cgi-bin/* /var/www/cgi-bin/
 	cp $(EMU_FILES) /var/www/cgi-bin/
 	@chmod a+x /var/www/cgi-bin/$(OUT)
-	cp  www/* /var/www/ -r
+	cp  www/* /var/www/html -r
 
 get:
 	cp ../framework/staging/* . -r
