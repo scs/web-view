@@ -32,6 +32,12 @@
 #define REG_GAIN 0x35
 #define REG_AGC_GAIN_OUTPUT 0xba
 #define REG_AEC_EXP_OUTPUT 0xbb
+#define CAM_REG_RESERVED_0x20 0x20
+#define CAM_REG_CHIP_CONTROL 0x07
+#define REG_ADC_RESOLUTION_CONTROL 0x1c
+#define REG_PIXEL_OP_MODE 0x0f
+#define REG_ROW_NOISE_CORR_CONTROL_1 0x70
+#define REG_SHUTTER_WIDTH_CONTROL 0x0a
 
 /* @brief The different data types of the argument string. */
 enum EnArgumentType
@@ -91,6 +97,26 @@ struct ARGUMENT_DATA
 	/*! @brief Says whether the argument bAutoGain has been
 	 * supplied or not. */
 	bool bAutoGain_supplied;
+	/*! @brief Initialize camera defaults. */
+	bool bInit;
+	/*! @brief Says whether the argument bInit has been
+	 * supplied or not. */
+	bool bInit_supplied;
+	/*! @brief Enable 12-to-10 bit companding mode. */
+	bool b12To10BitCompanding;
+	/*! @brief Says whether the argument b12To10BitCompanding has been
+	 * supplied or not. */
+	bool b12To10BitCompanding_supplied;
+	/*! @brief Enable high dynamic range. */
+	bool bHighDynamicRange;
+	/*! @brief Says whether the argument bHighDynamicRange has been
+	 * supplied or not. */
+	bool bHighDynamicRange_supplied;
+	/*! @brief Enable row-wise noise correction. */
+	bool bRowWiseNoiseCorr;
+	/*! @brief Says whether the argument bRowWiseNoiseCorr has been
+	 * supplied or not. */
+	bool bRowWiseNoiseCorr_supplied;
 };
 
 /*! @brief Main object structure of the CGI. Contains all 'global'

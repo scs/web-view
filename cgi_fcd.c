@@ -34,12 +34,16 @@ struct LCV_DEPENDENCY deps[] = {
 /*! @brief All potential arguments supplied to this CGI. */
 struct ARGUMENT args[] = 
 {
+  {"init", BOOL_ARG, &cgi.args.bInit, &cgi.args.bInit_supplied},
   {"autoGain", BOOL_ARG, &cgi.args.bAutoGain, &cgi.args.bAutoGain_supplied},
   {"maxGain", FLOAT_ARG, &cgi.args.maxGain, &cgi.args.bMaxGain_supplied},
   {"manGain", FLOAT_ARG, &cgi.args.manGain, &cgi.args.bManGain_supplied},
   {"autoExp", BOOL_ARG, &cgi.args.bAutoExp, &cgi.args.bAutoExp_supplied},
   {"maxExposure", INT_ARG, &cgi.args.maxExp, &cgi.args.bMaxExp_supplied},
-  {"manExposure", INT_ARG, &cgi.args.manExp, &cgi.args.bManExp_supplied}
+  {"manExposure", INT_ARG, &cgi.args.manExp, &cgi.args.bManExp_supplied},
+  {"compand12To10", BOOL_ARG, &cgi.args.b12To10BitCompanding, &cgi.args.b12To10BitCompanding_supplied},
+  {"highDynamicRange", BOOL_ARG, &cgi.args.bHighDynamicRange, &cgi.args.bHighDynamicRange_supplied},
+  {"rowWiseNoiseCorr", BOOL_ARG, &cgi.args.bRowWiseNoiseCorr, &cgi.args.bRowWiseNoiseCorr_supplied}
 };
 
 /*! @brief Set a bit in a value
@@ -235,15 +239,14 @@ int main()
         goto fb_err;
     }
 
+    LCVCamSetupPerspective( LCV_CAM_PERSPECTIVE_DEFAULT);
+
     err = LCVCamSetAreaOfInterest(0, 0, LCV_CAM_MAX_IMG_WIDTH, LCV_CAM_MAX_IMG_HEIGHT);
     if(err != SUCCESS)
       {
 	LCVLog(ERROR, "%s: Unable to set area of interest! (%d)\n",
 	       APP_NAME, err);
       }
-
-     LCVCamSetupPerspective( LCV_CAM_PERSPECTIVE_DEFAULT);
-
 #if defined(LCV_HOST) || defined(LCV_SIM)
     /* Create a file reader to load in the test images and
      * apply it to the camera module. */
@@ -290,8 +293,28 @@ int main()
 		 }
       }
 
-    /* ---------------- Apply arguments -------------*/
-    if(cgi.args.bAutoExp_supplied || cgi.args.bAutoGain_supplied)
+#ifdef NEVER
+     ---------------- Apply arguments -------------*/
+    /*    if(cgi.args.bInit_supplied && cgi.args.bInit)
+      {
+	/* Initialize the camera. */
+
+	/* Apply default (max) area-of-interest */
+	LCVCamSetAreaOfInterest(0,0,0,0);
+	/* Set default camera - scene perspective relation */
+	LCVCamSetupPerspective(LCV_CAM_PERSPECTIVE_DEFAULT);
+	/* Turn on auto-exposure and auto-gain by default. */
+	LCVCamSetRegisterValue(REG_AEC_AGC_ENABLE, 0x3);
+	/* Turn on continuous capture for this application. */
+	LCVCamSetRegisterValue(CAM_REG_CHIP_CONTROL, 0x388);
+	/* Set the undocumented reserved almighty Micron register to the
+	   "optimal" value. */
+	LCVCamSetRegisterValue(CAM_REG_RESERVED_0x20, 0x3d5);
+      }
+#endif
+
+
+      if(cgi.args.bAutoExp_supplied || cgi.args.bAutoGain_supplied)
       {
 	LCVCamGetRegisterValue(REG_AEC_AGC_ENABLE, &regVal);
 	if(cgi.args.bAutoExp_supplied)
@@ -321,7 +344,33 @@ int main()
       {
 	LCVCamSetRegisterValue(REG_GAIN, (uint16)(cgi.args.manGain*16));
       }
-    LCVCamSetRegisterValue(0x20, 0x3d5);
+
+    if(cgi.args.b12To10BitCompanding_supplied)
+      {
+	if(cgi.args.b12To10BitCompanding)
+	  LCVCamSetRegisterValue(REG_ADC_RESOLUTION_CONTROL, 0x3);
+	else
+	  LCVCamSetRegisterValue(REG_ADC_RESOLUTION_CONTROL, 0x2);
+      }
+
+    if(cgi.args.bHighDynamicRange_supplied)
+      {
+	/* Enable/disable Auto-Knee-Point adjustion. */
+	LCVCamGetRegisterValue(REG_SHUTTER_WIDTH_CONTROL, &regVal);
+	regVal = SET_BIT(regVal, 8, cgi.args.bHighDynamicRange);
+	LCVCamSetRegisterValue(REG_SHUTTER_WIDTH_CONTROL, regVal);
+	/* Enable/disable HDR */
+	LCVCamGetRegisterValue(REG_PIXEL_OP_MODE, &regVal);
+	regVal = SET_BIT(regVal, 6, cgi.args.bHighDynamicRange);
+	LCVCamSetRegisterValue(REG_PIXEL_OP_MODE, regVal);
+      }
+
+    if(cgi.args.bRowWiseNoiseCorr_supplied)
+      {
+	LCVCamGetRegisterValue(REG_ROW_NOISE_CORR_CONTROL_1, &regVal);
+	regVal = SET_BIT(regVal, 5, cgi.args.bRowWiseNoiseCorr);
+	LCVCamSetRegisterValue(REG_ROW_NOISE_CORR_CONTROL_1, regVal);
+      }
 
 #ifdef DBG_SPAM
     LCVLog(DEBUG, "Arguments applied!\n");
