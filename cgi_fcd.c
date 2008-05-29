@@ -16,7 +16,7 @@
 
 #define CAPTURE_RAW 0
 
-#define DBG_SPAM
+/*#define DBG_SPAM*/
 
 /*! @brief Main object structure of the CGI. Contains all 'global'
  * variables. */
@@ -239,14 +239,6 @@ int main()
         goto fb_err;
     }
 
-    LCVCamSetupPerspective( LCV_CAM_PERSPECTIVE_DEFAULT);
-
-    err = LCVCamSetAreaOfInterest(0, 0, LCV_CAM_MAX_IMG_WIDTH, LCV_CAM_MAX_IMG_HEIGHT);
-    if(err != SUCCESS)
-      {
-	LCVLog(ERROR, "%s: Unable to set area of interest! (%d)\n",
-	       APP_NAME, err);
-      }
 #if defined(LCV_HOST) || defined(LCV_SIM)
     /* Create a file reader to load in the test images and
      * apply it to the camera module. */
@@ -293,9 +285,8 @@ int main()
 		 }
       }
 
-#ifdef NEVER
      ---------------- Apply arguments -------------*/
-    /*    if(cgi.args.bInit_supplied && cgi.args.bInit)
+      if(cgi.args.bInit_supplied && cgi.args.bInit)
       {
 	/* Initialize the camera. */
 
@@ -311,7 +302,6 @@ int main()
 	   "optimal" value. */
 	LCVCamSetRegisterValue(CAM_REG_RESERVED_0x20, 0x3d5);
       }
-#endif
 
 
       if(cgi.args.bAutoExp_supplied || cgi.args.bAutoGain_supplied)
