@@ -27,20 +27,15 @@ h1, h2
 
 #controls
 { 
-  height: 8em;
+  height: 3.5em;
  }
-
-#steps 
-{
-  height: 15em;
-  }
 
 #navigation div
 { 
   margin-top: 2.5em;
   margin: 0.5em 0.5em 0.5em 0.5em;
   padding: 0.25em 0.25em 0.25em 0.25em;
-  background-color: #eee;
+  background-color: #ddd;
   }
 
 #logo
@@ -95,7 +90,7 @@ ul
 
 h2
 {
-  background: #eee;
+  background: #ddd;
   }
 
 h3 
