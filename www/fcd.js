@@ -3,6 +3,10 @@ var isIE = false;
 var bFirstRun = true;
 var bAutoExp = true;
 var bAutoGain = true;
+var b12To10BitCompanding = false;
+var bHighDynamicRange = false;
+var bRowWiseNoiseCorr = false;
+var configOption = 0;
 
 function onChangeAutoRefresh()
 {
@@ -49,6 +53,25 @@ function onChangeAutoGain()
     }
 }
 
+function onChangeConfigOption()
+{
+    switch(elem("configOption").selectedIndex)
+    {
+    case 0:
+	elem("brightnessControl").style.display = "block";
+	elem("imageQuality").style.display = "none";
+	elem("imageOrientation").style.display = "none";
+	configOption = 0;
+	break;
+    case 1:
+	elem("brightnessControl").style.display = "none";
+	elem("imageQuality").style.display = "block";
+	elem("imageOrientation").style.display = "none";
+	configOption = 1;
+	break;
+    }
+}
+
 function getHTTPObject() 
 {
     try
@@ -90,6 +113,20 @@ function getHTTPObject()
 
 function onLoad()
 {
+    /* Read current configuration. */
+    bAutoExp = elem("autoExposure").checked;
+    onChangeAutoExp();
+
+    bAutoGain = elem("autoGain").checked;
+    onChangeAutoGain();
+
+    b12To10BitCompanding = elem("Compand12To10").checked;
+    bHighDynamicRange = elem("highDynamicRange").checked;
+    bRowWiseNoiseCorr = elem("rowWiseNoiseCorr").checked;
+
+    configOption = elem("configOption").selectedIndex;
+    onChangeConfigOption()
+
     updateData();
 }
 
@@ -114,15 +151,31 @@ function updateData()
 
     getHTTPObject();
 
+    if(bFirstRun)
+    {
+	parameters = addURIQueryVal(parameters, "init", true);
+	bFirstRun = false;
+    }
     if(bAutoExp != elem("autoExposure").checked || bFirstRun)
     {
 	bAutoExp = elem("autoExposure").checked;
 	parameters = addURIQueryVal(parameters, "autoExp", bAutoExp);
     }
+    var intVal;
     if(bAutoExp)
-	parameters = addURIQueryVal(parameters, "maxExposure", elem("maxExpTime").value);
-    else
-	parameters = addURIQueryVal(parameters, "manExposure", elem("manExpTime").value);
+    {
+	intVal = parseInt(elem("maxExpTime").value);
+	if(!isNaN(intVal) && intVal >  1)
+	    parameters = addURIQueryVal(parameters, "maxExposure", intVal);
+	else
+	    parameters = addURIQueryVal(parameters, "maxExposure", 1);
+    } else {
+	intVal = parseInt(elem("manExpTime").value);
+	if(!isNaN(intVal) && intVal >  1)
+	    parameters = addURIQueryVal(parameters, "manExposure", intVal);
+	else
+	    parameters = addURIQueryVal(parameters, "manExposure", 1);
+    }
 
     if(bAutoGain != elem("autoGain").checked || bFirstRun)
     {
@@ -130,10 +183,39 @@ function updateData()
 	parameters = addURIQueryVal(parameters, "autoGain", elem("autoGain").checked);
     }
     
+    var floatVal;
     if(bAutoGain)
-	parameters = addURIQueryVal(parameters, "maxGain", elem("maxGainFactor").value);
-    else
-	parameters = addURIQueryVal(parameters, "manGain", elem("manGainFactor").value);
+    {
+	floatVal = parseFloat(elem("maxGainFactor").value);
+	if(!isNaN(floatVal) && floatVal > 0.2)
+	    parameters = addURIQueryVal(parameters, "maxGain", floatVal);
+	else
+	    parameters = addURIQueryVal(parameters, "maxGain", 0.2);
+    } else {
+	floatVal = parseFloat(elem("manGainFactor").value);
+	if(!isNaN(floatVal) && floatVal > 0.2)
+	    parameters = addURIQueryVal(parameters, "manGain", floatVal);
+	else
+	    parameters = addURIQueryVal(parameters, "manGain", 0.2);
+    }
+
+    if(b12To10BitCompanding != elem("Compand12To10").checked)
+    {
+	b12To10BitCompanding = !b12To10BitCompanding;
+	parameters = addURIQueryVal(parameters, "compand12To10", b12To10BitCompanding);
+    }
+
+    if(bHighDynamicRange != elem("highDynamicRange").checked)
+    {
+	bHighDynamicRange = !bHighDynamicRange;
+	parameters = addURIQueryVal(parameters, "highDynamicRange", bHighDynamicRange);
+    }
+
+    if(bRowWiseNoiseCorr != elem("rowWiseNoiseCorr").checked)
+    {
+	bRowWiseNoiseCorr = !bRowWiseNoiseCorr;
+	parameters = addURIQueryVal(parameters, "rowWiseNoiseCorr", bRowWiseNoiseCorr);
+    }
 
     bFirstRun = false;
 
@@ -189,7 +271,6 @@ function useHttpResponse()
 	    default:
 		// Something unexpected received.
 		//window.location="off.html";
-		alert(response[i]);
 		return;
 		break;
 	    }
