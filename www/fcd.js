@@ -1,12 +1,18 @@
 var xmlHttp = null;
 var isIE = false;
 var bFirstRun = true;
-var bAutoExp = true;
-var bAutoGain = true;
-var b12To10BitCompanding = false;
-var bHighDynamicRange = false;
-var bRowWiseNoiseCorr = false;
-var configOption = 0;
+var bSetRegister = false;
+
+var config = {
+    bAutoExp: true,
+    bAutoGain: true,
+    b12To10BitCompanding: false,
+    bHighDynamicRange: false,
+    bRowWiseNoiseCorr: false,
+    bHorizontalFlip: false,
+    bVerticalFlip: false,
+    configOption: 0
+}
 
 function onChangeAutoRefresh()
 {
@@ -55,19 +61,33 @@ function onChangeAutoGain()
 
 function onChangeConfigOption()
 {
-    switch(elem("configOption").selectedIndex)
+    config.configOption = elem("configOption").selectedIndex;
+
+    switch(config.configOption)
     {
     case 0:
 	elem("brightnessControl").style.display = "block";
 	elem("imageQuality").style.display = "none";
 	elem("imageOrientation").style.display = "none";
-	configOption = 0;
+	elem("registerModify").style.display = "none";	
 	break;
     case 1:
 	elem("brightnessControl").style.display = "none";
 	elem("imageQuality").style.display = "block";
 	elem("imageOrientation").style.display = "none";
-	configOption = 1;
+	elem("registerModify").style.display = "none";	
+	break;
+    case 2:
+	elem("brightnessControl").style.display = "none";
+	elem("imageQuality").style.display = "none";
+	elem("imageOrientation").style.display = "block";	
+	elem("registerModify").style.display = "none";	
+	break;
+    case 3:
+	elem("brightnessControl").style.display = "none";
+	elem("imageQuality").style.display = "none";
+	elem("imageOrientation").style.display = "none";	
+	elem("registerModify").style.display = "block";	
 	break;
     }
 }
@@ -114,15 +134,15 @@ function getHTTPObject()
 function onLoad()
 {
     /* Read current configuration. */
-    bAutoExp = elem("autoExposure").checked;
+    config.bAutoExp = elem("autoExposure").checked;
     onChangeAutoExp();
 
-    bAutoGain = elem("autoGain").checked;
+    config.bAutoGain = elem("autoGain").checked;
     onChangeAutoGain();
 
-    b12To10BitCompanding = elem("Compand12To10").checked;
-    bHighDynamicRange = elem("highDynamicRange").checked;
-    bRowWiseNoiseCorr = elem("rowWiseNoiseCorr").checked;
+    config.b12To10BitCompanding = elem("Compand12To10").checked;
+    config.bHighDynamicRange = elem("highDynamicRange").checked;
+    config.bRowWiseNoiseCorr = elem("rowWiseNoiseCorr").checked;
 
     configOption = elem("configOption").selectedIndex;
     onChangeConfigOption()
@@ -156,13 +176,13 @@ function updateData()
 	parameters = addURIQueryVal(parameters, "init", true);
 	bFirstRun = false;
     }
-    if(bAutoExp != elem("autoExposure").checked || bFirstRun)
+    if(config.bAutoExp != elem("autoExposure").checked || bFirstRun)
     {
-	bAutoExp = elem("autoExposure").checked;
-	parameters = addURIQueryVal(parameters, "autoExp", bAutoExp);
+	config.bAutoExp = elem("autoExposure").checked;
+	parameters = addURIQueryVal(parameters, "autoExp", config.bAutoExp);
     }
     var intVal;
-    if(bAutoExp)
+    if(config.bAutoExp)
     {
 	intVal = parseInt(elem("maxExpTime").value);
 	if(!isNaN(intVal) && intVal >  1)
@@ -177,14 +197,14 @@ function updateData()
 	    parameters = addURIQueryVal(parameters, "manExposure", 1);
     }
 
-    if(bAutoGain != elem("autoGain").checked || bFirstRun)
+    if(config.bAutoGain != elem("autoGain").checked || bFirstRun)
     {
-	bAutoGain = elem("autoGain").checked;
+	config.bAutoGain = elem("autoGain").checked;
 	parameters = addURIQueryVal(parameters, "autoGain", elem("autoGain").checked);
     }
     
     var floatVal;
-    if(bAutoGain)
+    if(config.bAutoGain)
     {
 	floatVal = parseFloat(elem("maxGainFactor").value);
 	if(!isNaN(floatVal) && floatVal > 0.2)
@@ -199,23 +219,47 @@ function updateData()
 	    parameters = addURIQueryVal(parameters, "manGain", 0.2);
     }
 
-    if(b12To10BitCompanding != elem("Compand12To10").checked)
+    if(config.b12To10BitCompanding != elem("Compand12To10").checked)
     {
-	b12To10BitCompanding = !b12To10BitCompanding;
-	parameters = addURIQueryVal(parameters, "compand12To10", b12To10BitCompanding);
+	config.b12To10BitCompanding = !config.b12To10BitCompanding;
+	parameters = addURIQueryVal(parameters, "compand12To10", config.b12To10BitCompanding);
     }
 
-    if(bHighDynamicRange != elem("highDynamicRange").checked)
+    if(config.bHighDynamicRange != elem("highDynamicRange").checked)
     {
-	bHighDynamicRange = !bHighDynamicRange;
-	parameters = addURIQueryVal(parameters, "highDynamicRange", bHighDynamicRange);
+	config.bHighDynamicRange = !config.bHighDynamicRange;
+	parameters = addURIQueryVal(parameters, "highDynamicRange", config.bHighDynamicRange);
     }
 
-    if(bRowWiseNoiseCorr != elem("rowWiseNoiseCorr").checked)
+    if(config.bRowWiseNoiseCorr != elem("rowWiseNoiseCorr").checked)
     {
-	bRowWiseNoiseCorr = !bRowWiseNoiseCorr;
-	parameters = addURIQueryVal(parameters, "rowWiseNoiseCorr", bRowWiseNoiseCorr);
+	config.bRowWiseNoiseCorr = !config.bRowWiseNoiseCorr;
+	parameters = addURIQueryVal(parameters, "rowWiseNoiseCorr", config.bRowWiseNoiseCorr);
     }
+
+    if(config.bHorizontalFlip != elem("horizontalFlip").checked || 
+      config.bVerticalFlip != elem("verticalFlip").checked)
+    {
+	if(config.bHorizontalFlip != elem("horizontalFlip").checked)
+	    config.bHorizontalFlip = !config.bHorizontalFlip;
+	if(config.bVerticalFlip != elem("verticalFlip").checked)
+	    config.bVerticalFlip = !config.bVerticalFlip;
+
+	parameters = addURIQueryVal(parameters, "horizontalFlip", config.bHorizontalFlip);
+	parameters = addURIQueryVal(parameters, "verticalFlip", config.bVerticalFlip);
+    }
+
+    if(config.configOption == 3)
+    {
+	parameters = addURIQueryVal(parameters, "register", parseInt(elem("register").value));
+    }
+
+    if(bSetRegister == true)
+    {
+	parameters = addURIQueryVal(parameters, "registerValue", parseInt(elem("nextRegisterValue").value));
+	bSetRegister = false;
+    }
+
 
     bFirstRun = false;
 
@@ -268,6 +312,14 @@ function useHttpResponse()
 		    elem(argSplit[0]).innerHTML = argSplit[1];
 		}
 		break;
+	    case "curRegisterValue":
+		if(isIE)
+		{
+		    elem(argSplit[0]).innerText = "0x" + parseInt(argSplit[1]).toString(16);
+		} else {
+		    elem(argSplit[0]).innerHTML = "0x" + parseInt(argSplit[1]).toString(16);
+		}
+		break;
 	    default:
 		// Something unexpected received.
 		//window.location="off.html";
@@ -280,19 +332,9 @@ function useHttpResponse()
     }
 }
 
-function setReg()
+function setRegister()
 {
-    var elem = document.getElementById("reg");
-    reg = parseInt(elem.value);
-
-    elem = document.getElementById("val");
-    val = parseInt(elem.value);
-}
-
-function getReg()
-{
-    var elem = document.getElementById("reg");
-    reg = parseInt(elem.value);
+    bSetRegister = true;
 }
 
 function modParam(paramName, mod, min, max)

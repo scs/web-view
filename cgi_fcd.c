@@ -41,18 +41,31 @@ struct ARGUMENT args[] =
   {"autoExp", BOOL_ARG, &cgi.args.bAutoExp, &cgi.args.bAutoExp_supplied},
   {"maxExposure", INT_ARG, &cgi.args.maxExp, &cgi.args.bMaxExp_supplied},
   {"manExposure", INT_ARG, &cgi.args.manExp, &cgi.args.bManExp_supplied},
+  {"register", INT_ARG, &cgi.args.reg, &cgi.args.bReg_supplied},
+  {"registerValue", INT_ARG, &cgi.args.regValue, &cgi.args.bRegValue_supplied},
   {"compand12To10", BOOL_ARG, &cgi.args.b12To10BitCompanding, &cgi.args.b12To10BitCompanding_supplied},
   {"highDynamicRange", BOOL_ARG, &cgi.args.bHighDynamicRange, &cgi.args.bHighDynamicRange_supplied},
-  {"rowWiseNoiseCorr", BOOL_ARG, &cgi.args.bRowWiseNoiseCorr, &cgi.args.bRowWiseNoiseCorr_supplied}
+  {"rowWiseNoiseCorr", BOOL_ARG, &cgi.args.bRowWiseNoiseCorr, &cgi.args.bRowWiseNoiseCorr_supplied},
+  {"horizontalFlip", BOOL_ARG, &cgi.args.bHorizontalFlip, &cgi.args.bHorizontalFlip_supplied},
+  {"verticalFlip", BOOL_ARG, &cgi.args.bVerticalFlip, &cgi.args.bVerticalFlip_supplied}
 };
 
-/*! @brief Set a bit in a value
+/*********************************************//*!
+ * @brief Set a bit in a value
  * @param val Value to change.
  * @param bitNr The bit position (counted from LSB)
  * @param bitVal Bit value to set.
  * @return Updated value.
 */
 #define SET_BIT(val, bitNr, bitVal) ((val & ~(1 << bitNr)) | (bitVal << bitNr))
+
+/*********************************************//*!
+ * @brief Flip a bit in a value
+ * @param val Value to change.
+ * @param bitNr The bit position (counted from LSB)
+ * @return Updated value.
+*/
+#define FLIP_BIT(val, bitNr) ((val & ~(1 << bitNr)) | ((!(val && (1 << bitNr))) << bitNr))
 
 static LCV_ERR CGIParseArguments(const char *strSrc, const int32 srcLen)
 {
@@ -293,7 +306,7 @@ int main()
 
 #ifdef NEVER
      ---------------- Apply arguments -------------*/
-    /*    if(cgi.args.bInit_supplied && cgi.args.bInit)
+       if(cgi.args.bInit_supplied && cgi.args.bInit)
       {
 	/* Initialize the camera. */
 
@@ -343,6 +356,11 @@ int main()
 	LCVCamSetRegisterValue(REG_GAIN, (uint16)(cgi.args.manGain*16));
       }
 
+    if(cgi.args.bRegValue_supplied && cgi.args.bReg_supplied)
+      {
+	LCVCamSetRegisterValue(cgi.args.reg, cgi.args.regValue);
+      }
+
     if(cgi.args.b12To10BitCompanding_supplied)
       {
 	if(cgi.args.b12To10BitCompanding)
@@ -369,6 +387,26 @@ int main()
 	regVal = SET_BIT(regVal, 5, cgi.args.bRowWiseNoiseCorr);
 	LCVCamSetRegisterValue(REG_ROW_NOISE_CORR_CONTROL_1, regVal);
       }
+
+    if(cgi.args.bHorizontalFlip_supplied && cgi.args.bVerticalFlip_supplied)
+    {
+      regVal = cgi.args.bHorizontalFlip << 1 | cgi.args.bVerticalFlip;
+      switch(regVal)
+	{
+	case 0:
+	  LCVCamSetupPerspective(LCV_CAM_PERSPECTIVE_DEFAULT);
+	  break;
+	case 1:
+	  LCVCamSetupPerspective(LCV_CAM_PERSPECTIVE_VERTICAL_MIRROR);
+	  break;
+	case 2:
+	  LCVCamSetupPerspective(LCV_CAM_PERSPECTIVE_HORIZONTAL_MIRROR);
+	  break;
+	case 3:
+	  LCVCamSetupPerspective(LCV_CAM_PERSPECTIVE_180DEG_ROTATE);
+	  break;
+	}
+    }
 
 #ifdef DBG_SPAM
     LCVLog(DEBUG, "Arguments applied!\n");
@@ -440,7 +478,11 @@ int main()
     printf("curGainFactor=%f\n", ((float)regVal)*0.0625f);
     LCVCamGetRegisterValue(REG_AEC_EXP_OUTPUT, &regVal);
     printf("curExpTime=%hu\n", (34*regVal)/1000);
-
+    if(cgi.args.bReg_supplied)
+      {
+	LCVCamGetRegisterValue(cgi.args.reg, &regVal);
+	printf("curRegisterValue=%hu\n", regVal);
+      }
 #ifdef DBG_SPAM
     LCVLog(DEBUG, "Closing...!\n");
 #endif

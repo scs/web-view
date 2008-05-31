@@ -38,6 +38,7 @@
 #define REG_PIXEL_OP_MODE 0x0f
 #define REG_ROW_NOISE_CORR_CONTROL_1 0x70
 #define REG_SHUTTER_WIDTH_CONTROL 0x0a
+#define REG_READ_MODE 0x0d
 
 /* @brief The different data types of the argument string. */
 enum EnArgumentType
@@ -87,6 +88,16 @@ struct ARGUMENT_DATA
 	/*! @brief Says whether the argument manExp has been
 	 * supplied or not. */
 	bool bManExp_supplied;
+	/*! @brief Currently selected register. */
+	int reg;
+	/*! @brief Says whether the argument reg has been
+	 * supplied or not. */
+	bool bReg_supplied;
+	/*! @brief New value for currently selected register. */
+	int regValue;
+	/*! @brief Says whether the argument regValue has been
+	 * supplied or not. */
+	bool bRegValue_supplied;
 	/*! @brief Auto-Exposure. */
 	bool bAutoExp;
 	/*! @brief Says whether the argument bAutoExp has been
@@ -117,6 +128,16 @@ struct ARGUMENT_DATA
 	/*! @brief Says whether the argument bRowWiseNoiseCorr has been
 	 * supplied or not. */
 	bool bRowWiseNoiseCorr_supplied;
+	/*! @brief Flip image horizontally. */
+	bool bHorizontalFlip;
+	/*! @brief Says whether the argument bHorizontalFlip has been
+	 * supplied or not. */
+	bool bHorizontalFlip_supplied;
+	/*! @brief Flip image vertically. */
+	bool bVerticalFlip;
+	/*! @brief Says whether the argument bVerticalFlip has been
+	 * supplied or not. */
+	bool bVerticalFlip_supplied;
 };
 
 /*! @brief Main object structure of the CGI. Contains all 'global'
