@@ -145,7 +145,7 @@ function onLoad()
     config.bRowWiseNoiseCorr = elem("rowWiseNoiseCorr").checked;
 
     configOption = elem("configOption").selectedIndex;
-    onChangeConfigOption()
+    onChangeConfigOption();
 
     updateData();
 }
@@ -249,12 +249,12 @@ function updateData()
 	parameters = addURIQueryVal(parameters, "verticalFlip", config.bVerticalFlip);
     }
 
-    if(config.configOption == 3)
+    if(config.configOption == 3 && !isNaN(parseInt(elem("register").value)))
     {
 	parameters = addURIQueryVal(parameters, "register", parseInt(elem("register").value));
     }
 
-    if(bSetRegister == true)
+    if(bSetRegister == true && !isNaN(parseInt(elem("nextRegisterValue").value)))
     {
 	parameters = addURIQueryVal(parameters, "registerValue", parseInt(elem("nextRegisterValue").value));
 	bSetRegister = false;
