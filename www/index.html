@@ -111,13 +111,13 @@
 	<div id="registerModify">
 	    <h2>Read/Write registers</h2>
 		    <p>
-			<label for="register">Register/Value:</label>
+			<label for="register">Register/Current Value:</label>
 			<input type="text" maxLength="4" size="4" value="0x0" id="register" name="register" />
 			<span id="curRegisterValue">0x0</span>
 		    </p>
 		    <p>
-			<label for="nextRegisterValue">Set Register:</label>
-			<input type="text" maxLength="4" size="4" value="0x0" id="nextRegisterValue" name="nextRegisterValue" />
+			<label for="nextRegisterValue">Set to value:</label>
+			<input type="text" maxLength="6" size="6" value="0x0" id="nextRegisterValue" name="nextRegisterValue" />
 			<button onClick="javascript: setRegister()" id="setRegister" name="setRegister">Set</button>
 		    </p>
 	</div>
