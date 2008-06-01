@@ -16,7 +16,7 @@
 
 #define CAPTURE_RAW 0
 
-#define DBG_SPAM
+/*#define DBG_SPAM*/
 
 /*! @brief Main object structure of the CGI. Contains all 'global'
  * variables. */
@@ -304,8 +304,7 @@ int main()
 		 }
       }
 
-#ifdef NEVER
-     ---------------- Apply arguments -------------*/
+    /* ---------------- Apply arguments -------------*/
        if(cgi.args.bInit_supplied && cgi.args.bInit)
       {
 	/* Initialize the camera. */
@@ -322,8 +321,6 @@ int main()
 	   "optimal" value. */
 	LCVCamSetRegisterValue(CAM_REG_RESERVED_0x20, 0x3d5);
       }
-#endif
-
 
       if(cgi.args.bAutoExp_supplied || cgi.args.bAutoGain_supplied)
       {
