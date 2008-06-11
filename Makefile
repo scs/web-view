@@ -65,7 +65,7 @@ host: $(SOURCES) inc/*.h lib/liblcv_host.a  $(WEB_FILES) $(EMU_FILES)
 	cp www/cgi-bin/* /var/www/cgi-bin/
 	cp $(EMU_FILES) /var/www/cgi-bin/
 	@chmod a+x /var/www/cgi-bin/$(OUT)
-	cp  www/* /var/www/html -r
+	cp  www/* /var/www -r
 
 get:
 	cp ../framework/staging/* . -r
