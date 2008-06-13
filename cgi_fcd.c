@@ -67,6 +67,17 @@ struct ARGUMENT args[] =
 */
 #define FLIP_BIT(val, bitNr) ((val & ~(1 << bitNr)) | ((!(val && (1 << bitNr))) << bitNr))
 
+/*********************************************************************//*!
+ * @brief Split the supplied URI string into arguments and parse them.
+ * 
+ * Matches the argument string with the arguments list (args) and fills in 
+ * their values. Unknown arguments provoke an error, but missing 
+ * arguments are just ignored.
+ * 
+ * @param strSrc The argument string.
+ * @param srcLen The length of the argument string.
+ * @return SUCCESS or an appropriate error code otherwise
+ *//*********************************************************************/
 static LCV_ERR CGIParseArguments(const char *strSrc, const int32 srcLen)
 {
 	unsigned int		code, i;
@@ -207,6 +218,12 @@ static LCV_ERR CGIParseArguments(const char *strSrc, const int32 srcLen)
 	return SUCCESS;
 }
 
+/*********************************************************************//*!
+ * @brief Execution starting point
+ * 
+ * Handles initialization, control and unloading.
+ * @return 0 on success, -1 otherwise
+ *//*********************************************************************/
 int main()
 {
   char *strContentLen;
