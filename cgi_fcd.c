@@ -232,6 +232,7 @@ int main()
   void *pPic = NULL;
   struct LCV_PICTURE picFile;
   uint16 regVal;
+  enum EnBayerOrder enBayerOrder;
 
   /* -------------- Initialization ------------------ */
 
@@ -445,19 +446,23 @@ int main()
 #endif
     if(!CAPTURE_RAW)
       {
-	err = LCVVisDebayer(pPic,
+      	err = LCVCamGetBayerOrder(&enBayerOrder, 0, 0);
+      	if(err != SUCCESS)
+      	{
+      		LCVLog(ERROR, APP_NAME ": Error getting bayer order! (%d)\n", err);
+      	}
+      	
+		err = LCVVisDebayer(pPic,
 			    LCV_CAM_MAX_IMG_WIDTH,
 			    LCV_CAM_MAX_IMG_HEIGHT,
-			    0,
-			    0,
+			    enBayerOrder,
 			    cgi.imgBuf);
-	if(err != SUCCESS)
-	  {
-	    LCVLog(ERROR, APP_NAME ": Error debayering image! (%d)\n",
-		   err);
-	    goto exit_unload;
-	  }
-      }
+		if(err != SUCCESS)
+	  	{	
+	    	LCVLog(ERROR, APP_NAME ": Error debayering image! (%d)\n", err);
+	    	goto exit_unload;
+	  	}
+    }
     /* --------------- Save as file --------------*/
     if(CAPTURE_RAW)
       {
