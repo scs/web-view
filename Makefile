@@ -45,8 +45,8 @@ target: $(SOURCES) inc/*.h lib/liblcv_target.a $(WEB_FILES)
 	cp $(OUT)$(TARGET_SUFFIX) /tftpboot/$(OUT)
 	@mkdir -p www/cgi-bin
 	@cp $(OUT)$(TARGET_SUFFIX) www/cgi-bin/$(OUT)
-	tar cfz www.tar.gz -C www .
-	cp www.tar.gz /tftpboot
+	tar cfz targetFiles/www.tar.gz -C www .
+	cp targetFiles/www.tar.gz /tftpboot
 
 targetdbg: $(SOURCES) inc/*.h lib/liblcv_target.a $(WEB_FILES)
 	@echo "Compiling for target.."

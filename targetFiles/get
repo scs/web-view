@@ -1,0 +1,1 @@
+tftp $TFTPIP -g -r $1 -l $1
