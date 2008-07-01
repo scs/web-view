@@ -1,7 +1,6 @@
 /*! @file cgi_sht.c
  * @brief CGI used for the webinterface of the SHT application.
  * 
- * @author Markus Berner
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,7 +8,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include "inc/framework.h"
+#include "inc/oscar.h"
 #include "cgi_fcd.h"
 
 #include <time.h>
@@ -23,12 +22,12 @@
 struct CGI_FCD cgi;
 
 /*! @brief The framework module dependencies of this application. */
-struct LCV_DEPENDENCY deps[] = {
-        {"log", LCVLogCreate, LCVLogDestroy},
-        {"sup", LCVSupCreate, LCVSupDestroy},
-        {"bmp", LCVBmpCreate, LCVBmpDestroy},
-        {"cam", LCVCamCreate, LCVCamDestroy},
-	{"vis", LCVVisCreate, LCVVisDestroy}
+struct OSC_DEPENDENCY deps[] = {
+        {"log", OscLogCreate, OscLogDestroy},
+        {"sup", OscSupCreate, OscSupDestroy},
+        {"bmp", OscBmpCreate, OscBmpDestroy},
+        {"cam", OscCamCreate, OscCamDestroy},
+	{"vis", OscVisCreate, OscVisDestroy}
 };
 
 /*! @brief All potential arguments supplied to this CGI. */
@@ -78,7 +77,7 @@ struct ARGUMENT args[] =
  * @param srcLen The length of the argument string.
  * @return SUCCESS or an appropriate error code otherwise
  *//*********************************************************************/
-static LCV_ERR CGIParseArguments(const char *strSrc, const int32 srcLen)
+static OSC_ERR CGIParseArguments(const char *strSrc, const int32 srcLen)
 {
 	unsigned int		code, i;
 	const char 		*strSrcLast = &strSrc[srcLen];
@@ -119,7 +118,7 @@ static LCV_ERR CGIParseArguments(const char *strSrc, const int32 srcLen)
 			
 			if(unlikely(pArg == NULL))
 			{
-				LCVLog(ERROR, "%s: Unknown argument encountered: \"%s\"\n",
+				OscLog(ERROR, "%s: Unknown argument encountered: \"%s\"\n",
 						__func__, cgi.strArgumentsTemp);
 				return -EINVALID_PARAMETER;
 			}
@@ -130,7 +129,7 @@ static LCV_ERR CGIParseArguments(const char *strSrc, const int32 srcLen)
 			*strTemp = '\0';
 			if(unlikely(pArg == NULL))
 			{
-				LCVLog(ERROR, "%s: Value without type found: \"%s\"\n",
+				OscLog(ERROR, "%s: Value without type found: \"%s\"\n",
 						__func__, strTemp);
 				return -EINVALID_PARAMETER;
 			}
@@ -145,7 +144,7 @@ static LCV_ERR CGIParseArguments(const char *strSrc, const int32 srcLen)
 			case INT_ARG:
 				if(sscanf(strTemp, "%d", (int*)pArg->pData) != 1)
 				{
-					LCVLog(ERROR, "%s: Unable to parse int value of "
+					OscLog(ERROR, "%s: Unable to parse int value of "
 							"variable \"%s\" (%s)!\n",
 							__func__, pArg->strName, strTemp);
 					return -EINVALID_PARAMETER;
@@ -154,7 +153,7 @@ static LCV_ERR CGIParseArguments(const char *strSrc, const int32 srcLen)
 			case SHORT_ARG:
 			    if(sscanf(strTemp, "%hd", (short*)pArg->pData) != 1)
 			    {
-			        LCVLog(ERROR, "%s: Unable to parse short value of "
+			        OscLog(ERROR, "%s: Unable to parse short value of "
 			                "variable \"%s\" (%s)!\n",
 			                __func__, pArg->strName, strTemp);
 			        return -EINVALID_PARAMETER;
@@ -169,7 +168,7 @@ static LCV_ERR CGIParseArguments(const char *strSrc, const int32 srcLen)
 			    {
 			        *((bool*)pArg->pData) = FALSE;
 			    } else {
-			        LCVLog(ERROR, "CGI %s: Unable to parse boolean value"
+			        OscLog(ERROR, "CGI %s: Unable to parse boolean value"
 			                "of variable \"%s\" (%s)!\n",
 			                __func__,
 			                pArg->strName,
@@ -180,7 +179,7 @@ static LCV_ERR CGIParseArguments(const char *strSrc, const int32 srcLen)
 			case FLOAT_ARG:
 			  if(sscanf(strTemp, "%f", (float*)pArg->pData) != 1)
 			    {
-			      LCVLog(ERROR, "%s: Unable to parse float value of "
+			      OscLog(ERROR, "%s: Unable to parse float value of "
 				     "variable \"%s\" (%s)!\n",
 				     __func__, pArg->strName, strTemp);
 			      return -EINVALID_PARAMETER;
@@ -228,9 +227,9 @@ int main()
 {
   char *strContentLen;
   int contentLen;
-  LCV_ERR err;
+  OSC_ERR err;
   void *pPic = NULL;
-  struct LCV_PICTURE picFile;
+  struct OSC_PICTURE picFile;
   uint16 regVal;
   enum EnBayerOrder enBayerOrder;
 
@@ -239,7 +238,7 @@ int main()
   memset(&cgi, 0, sizeof(struct CGI_FCD));
 
   /* Instantiate the framework. */
-  err = LCVCreate(&cgi.hFramework);
+  err = OscCreate(&cgi.hFramework);
   if(err != SUCCESS)
     {
       printf(APP_NAME ": Unable to create framework!\n");
@@ -247,9 +246,9 @@ int main()
     }
 
   /* Instantiate all required framework modules. */
-  err = LCVLoadDependencies(cgi.hFramework, 
+  err = OscLoadDependencies(cgi.hFramework, 
 			    deps, 
-			    sizeof(deps)/sizeof(struct LCV_DEPENDENCY));
+			    sizeof(deps)/sizeof(struct OSC_DEPENDENCY));
   if(err != SUCCESS)
     {
       fprintf(stderr, "%s: ERROR: Unable to load dependencies! (%d)\n",
@@ -258,46 +257,46 @@ int main()
       goto dep_err;
     } 
 
-  LCVLogSetConsoleLogLevel(CRITICAL);
-  LCVLogSetFileLogLevel(DEBUG);
+  OscLogSetConsoleLogLevel(CRITICAL);
+  OscLogSetFileLogLevel(DEBUG);
 
   /* Set a frame buffer to capture to. */
-  err = LCVCamSetFrameBuffer(0, sizeof(cgi.frameBuf), cgi.frameBuf, TRUE);
+  err = OscCamSetFrameBuffer(0, sizeof(cgi.frameBuf), cgi.frameBuf, TRUE);
     if(err != SUCCESS)
     {
-        LCVLog(ERROR, "%s: Unable to set up frame buffer! (%d)\n",
+        OscLog(ERROR, "%s: Unable to set up frame buffer! (%d)\n",
                 APP_NAME, err);
         goto fb_err;
     }
 
-    err = LCVCamSetAreaOfInterest(0, 0, LCV_CAM_MAX_IMG_WIDTH, LCV_CAM_MAX_IMG_HEIGHT);
+    err = OscCamSetAreaOfInterest(0, 0, OSC_CAM_MAX_IMG_WIDTH, OSC_CAM_MAX_IMG_HEIGHT);
     if(err != SUCCESS)
       {
-	LCVLog(ERROR, "%s: Unable to set area of interest! (%d)\n",
+	OscLog(ERROR, "%s: Unable to set area of interest! (%d)\n",
 	       APP_NAME, err);
       }
-#if defined(LCV_HOST) || defined(LCV_SIM)
+#if defined(OSC_HOST) || defined(OSC_SIM)
     /* Create a file reader to load in the test images and
      * apply it to the camera module. */
-    err = LCVFrdCreateFileListReader(&cgi.hFileNameReader,
+    err = OscFrdCreateFileListReader(&cgi.hFileNameReader,
 				     "hostImgs.txt");
     if(err != SUCCESS)
       {
-	LCVLog(ERROR, "%s: Unable to open file name reader for file!\n", 
+	OscLog(ERROR, "%s: Unable to open file name reader for file!\n", 
 	       __func__, 
 	       cgi.hFileNameReader);
 	return err;
       }
 
-    err = LCVCamSetFileNameReader(cgi.hFileNameReader);
+    err = OscCamSetFileNameReader(cgi.hFileNameReader);
     if(err != SUCCESS)
       {
-	LCVLog(ERROR, "%s: Unable to set file name reader for "
+	OscLog(ERROR, "%s: Unable to set file name reader for "
 	       "camera (%d)!\n", __func__, err);
 	return -EDEVICE;
       }
-    LCVSimInitialize();
-#endif /* LCV_HOST or LCV_SIM */
+    OscSimInitialize();
+#endif /* OSC_HOST or OSC_SIM */
 
     /* ---------------- Parse POST arguments -------------*/
     strContentLen = getenv("CONTENT_LENGTH");
@@ -311,12 +310,12 @@ int main()
 	/* Get the argument string. */
 	fgets(cgi.strArgumentsRaw, contentLen + 1, stdin);
 #ifdef DBG_SPAM
-	LCVLog(DEBUG, "CGI: Arguments: \"%s\"\n", cgi.strArgumentsRaw);
+	OscLog(DEBUG, "CGI: Arguments: \"%s\"\n", cgi.strArgumentsRaw);
 #endif
 	err = CGIParseArguments(cgi.strArgumentsRaw, contentLen + 1);
 	if(err != SUCCESS)
 		 {
-		   LCVLog(ERROR, "CGI: Error parsing command line arguments! "
+		   OscLog(ERROR, "CGI: Error parsing command line arguments! "
 			  "\"%s\"\n", cgi.strArgumentsRaw);
 		   goto exit_unload;
 		 }
@@ -328,21 +327,21 @@ int main()
 	/* Initialize the camera. */
 
 	/* Apply default (max) area-of-interest */
-	LCVCamSetAreaOfInterest(0,0,0,0);
+	OscCamSetAreaOfInterest(0,0,0,0);
 	/* Set default camera - scene perspective relation */
-	LCVCamSetupPerspective(LCV_CAM_PERSPECTIVE_DEFAULT);
+	OscCamSetupPerspective(OSC_CAM_PERSPECTIVE_DEFAULT);
 	/* Turn on auto-exposure and auto-gain by default. */
-	LCVCamSetRegisterValue(REG_AEC_AGC_ENABLE, 0x3);
+	OscCamSetRegisterValue(REG_AEC_AGC_ENABLE, 0x3);
 	/* Turn on continuous capture for this application. */
-	LCVCamSetRegisterValue(CAM_REG_CHIP_CONTROL, 0x388);
+	OscCamSetRegisterValue(CAM_REG_CHIP_CONTROL, 0x388);
 	/* Set the undocumented reserved almighty Micron register to the
 	   "optimal" value. */
-	LCVCamSetRegisterValue(CAM_REG_RESERVED_0x20, 0x3d5);
+	OscCamSetRegisterValue(CAM_REG_RESERVED_0x20, 0x3d5);
       }
 
       if(cgi.args.bAutoExp_supplied || cgi.args.bAutoGain_supplied)
       {
-	LCVCamGetRegisterValue(REG_AEC_AGC_ENABLE, &regVal);
+	OscCamGetRegisterValue(REG_AEC_AGC_ENABLE, &regVal);
 	if(cgi.args.bAutoExp_supplied)
 	  {
 	    regVal = SET_BIT(regVal, 0, cgi.args.bAutoExp);
@@ -351,56 +350,56 @@ int main()
 	  {
 	    regVal = SET_BIT(regVal, 1, cgi.args.bAutoGain);
 	  }
-	LCVCamSetRegisterValue(REG_AEC_AGC_ENABLE, regVal);
+	OscCamSetRegisterValue(REG_AEC_AGC_ENABLE, regVal);
       }
 
     if(cgi.args.bMaxExp_supplied)
       {
-	LCVCamSetRegisterValue(REG_MAX_EXP, (uint16)((float)cgi.args.maxExp*1000*0.02955f));
+	OscCamSetRegisterValue(REG_MAX_EXP, (uint16)((float)cgi.args.maxExp*1000*0.02955f));
       }
     if(cgi.args.bMaxGain_supplied)
       {
-	LCVCamSetRegisterValue(REG_MAX_GAIN, (uint16)(cgi.args.maxGain*16));
+	OscCamSetRegisterValue(REG_MAX_GAIN, (uint16)(cgi.args.maxGain*16));
       }
     if(cgi.args.bManExp_supplied)
       {
-	LCVCamSetRegisterValue(REG_EXPOSURE, (uint16)((float)cgi.args.manExp*1000*0.02955f));
+	OscCamSetRegisterValue(REG_EXPOSURE, (uint16)((float)cgi.args.manExp*1000*0.02955f));
       }
     if(cgi.args.bManGain_supplied)
       {
-	LCVCamSetRegisterValue(REG_GAIN, (uint16)(cgi.args.manGain*16));
+	OscCamSetRegisterValue(REG_GAIN, (uint16)(cgi.args.manGain*16));
       }
 
     if(cgi.args.bRegValue_supplied && cgi.args.bReg_supplied)
       {
-	LCVCamSetRegisterValue(cgi.args.reg, cgi.args.regValue);
+	OscCamSetRegisterValue(cgi.args.reg, cgi.args.regValue);
       }
 
     if(cgi.args.b12To10BitCompanding_supplied)
       {
 	if(cgi.args.b12To10BitCompanding)
-	  LCVCamSetRegisterValue(REG_ADC_RESOLUTION_CONTROL, 0x3);
+	  OscCamSetRegisterValue(REG_ADC_RESOLUTION_CONTROL, 0x3);
 	else
-	  LCVCamSetRegisterValue(REG_ADC_RESOLUTION_CONTROL, 0x2);
+	  OscCamSetRegisterValue(REG_ADC_RESOLUTION_CONTROL, 0x2);
       }
 
     if(cgi.args.bHighDynamicRange_supplied)
       {
 	/* Enable/disable Auto-Knee-Point adjustion. */
-	LCVCamGetRegisterValue(REG_SHUTTER_WIDTH_CONTROL, &regVal);
+	OscCamGetRegisterValue(REG_SHUTTER_WIDTH_CONTROL, &regVal);
 	regVal = SET_BIT(regVal, 8, cgi.args.bHighDynamicRange);
-	LCVCamSetRegisterValue(REG_SHUTTER_WIDTH_CONTROL, regVal);
+	OscCamSetRegisterValue(REG_SHUTTER_WIDTH_CONTROL, regVal);
 	/* Enable/disable HDR */
-	LCVCamGetRegisterValue(REG_PIXEL_OP_MODE, &regVal);
+	OscCamGetRegisterValue(REG_PIXEL_OP_MODE, &regVal);
 	regVal = SET_BIT(regVal, 6, cgi.args.bHighDynamicRange);
-	LCVCamSetRegisterValue(REG_PIXEL_OP_MODE, regVal);
+	OscCamSetRegisterValue(REG_PIXEL_OP_MODE, regVal);
       }
 
     if(cgi.args.bRowWiseNoiseCorr_supplied)
       {
-	LCVCamGetRegisterValue(REG_ROW_NOISE_CORR_CONTROL_1, &regVal);
+	OscCamGetRegisterValue(REG_ROW_NOISE_CORR_CONTROL_1, &regVal);
 	regVal = SET_BIT(regVal, 5, cgi.args.bRowWiseNoiseCorr);
-	LCVCamSetRegisterValue(REG_ROW_NOISE_CORR_CONTROL_1, regVal);
+	OscCamSetRegisterValue(REG_ROW_NOISE_CORR_CONTROL_1, regVal);
       }
 
     if(cgi.args.bHorizontalFlip_supplied && cgi.args.bVerticalFlip_supplied)
@@ -409,57 +408,57 @@ int main()
       switch(regVal)
 	{
 	case 0:
-	  LCVCamSetupPerspective(LCV_CAM_PERSPECTIVE_DEFAULT);
+	  OscCamSetupPerspective(OSC_CAM_PERSPECTIVE_DEFAULT);
 	  break;
 	case 1:
-	  LCVCamSetupPerspective(LCV_CAM_PERSPECTIVE_VERTICAL_MIRROR);
+	  OscCamSetupPerspective(OSC_CAM_PERSPECTIVE_VERTICAL_MIRROR);
 	  break;
 	case 2:
-	  LCVCamSetupPerspective(LCV_CAM_PERSPECTIVE_HORIZONTAL_MIRROR);
+	  OscCamSetupPerspective(OSC_CAM_PERSPECTIVE_HORIZONTAL_MIRROR);
 	  break;
 	case 3:
-	  LCVCamSetupPerspective(LCV_CAM_PERSPECTIVE_180DEG_ROTATE);
+	  OscCamSetupPerspective(OSC_CAM_PERSPECTIVE_180DEG_ROTATE);
 	  break;
 	}
     }
 
 #ifdef DBG_SPAM
-    LCVLog(DEBUG, "Arguments applied!\n");
+    OscLog(DEBUG, "Arguments applied!\n");
 #endif
     
     /* ---------------- Frame capture -------------*/
-    err = LCVCamSetupCapture(0, LCV_CAM_TRIGGER_MODE_MANUAL);
+    err = OscCamSetupCapture(0, OSC_CAM_TRIGGER_MODE_MANUAL);
     if(err != SUCCESS)
       {
-	LCVLog(ERROR, APP_NAME ": Unable to trigger frame! (%d)\n", err);
+	OscLog(ERROR, APP_NAME ": Unable to trigger frame! (%d)\n", err);
 	goto exit_unload;
       }
     
-    err = LCVCamReadPicture(0, &pPic, 0, 10000);
+    err = OscCamReadPicture(0, &pPic, 0, 10000);
     if(err != SUCCESS)
       {
-	LCVLog(ERROR, APP_NAME ": Unable to read picture! (%d)\n", err);
+	OscLog(ERROR, APP_NAME ": Unable to read picture! (%d)\n", err);
 	goto exit_unload;
       }
 #ifdef DBG_SPAM
-    LCVLog(DEBUG, "Image read!\n");
+    OscLog(DEBUG, "Image read!\n");
 #endif
     if(!CAPTURE_RAW)
       {
-      	err = LCVCamGetBayerOrder(&enBayerOrder, 0, 0);
+      	err = OscCamGetBayerOrder(&enBayerOrder, 0, 0);
       	if(err != SUCCESS)
       	{
-      		LCVLog(ERROR, APP_NAME ": Error getting bayer order! (%d)\n", err);
+      		OscLog(ERROR, APP_NAME ": Error getting bayer order! (%d)\n", err);
       	}
       	
-		err = LCVVisDebayer(pPic,
-			    LCV_CAM_MAX_IMG_WIDTH,
-			    LCV_CAM_MAX_IMG_HEIGHT,
+		err = OscVisDebayer(pPic,
+			    OSC_CAM_MAX_IMG_WIDTH,
+			    OSC_CAM_MAX_IMG_HEIGHT,
 			    enBayerOrder,
 			    cgi.imgBuf);
 		if(err != SUCCESS)
 	  	{	
-	    	LCVLog(ERROR, APP_NAME ": Error debayering image! (%d)\n", err);
+	    	OscLog(ERROR, APP_NAME ": Error debayering image! (%d)\n", err);
 	    	goto exit_unload;
 	  	}
     }
@@ -467,51 +466,51 @@ int main()
     if(CAPTURE_RAW)
       {
 	picFile.data = pPic;
-	picFile.type = LCV_PICTURE_GREYSCALE;
+	picFile.type = OSC_PICTURE_GREYSCALE;
       } else {
 	picFile.data = cgi.imgBuf;
-	picFile.type = LCV_PICTURE_RGB_24;
+	picFile.type = OSC_PICTURE_RGB_24;
 
       }
-    picFile.width = LCV_CAM_MAX_IMG_WIDTH;
-    picFile.height = LCV_CAM_MAX_IMG_HEIGHT;
+    picFile.width = OSC_CAM_MAX_IMG_WIDTH;
+    picFile.height = OSC_CAM_MAX_IMG_HEIGHT;
 
-    err = LCVBmpWrite(&picFile, OUT_IMG_NAME);
+    err = OscBmpWrite(&picFile, OUT_IMG_NAME);
     if(err != SUCCESS)
       {
-	LCVLog(ERROR, APP_NAME ": Unable to write image to file! (%d)\n", err);
+	OscLog(ERROR, APP_NAME ": Unable to write image to file! (%d)\n", err);
 	goto exit_unload;
       }
 
-    cgi.timeStamp = LCVSupCycGet();
+    cgi.timeStamp = OscSupCycGet();
 
 #ifdef DBG_SPAM
-    LCVLog(DEBUG, "Image written!\n");
+    OscLog(DEBUG, "Image written!\n");
 #endif
     /* ---------------- CGI response --------------*/
     /* Header */
     printf("Content-type: text/html\n\n");
 
     printf("TS=%lu\n", cgi.timeStamp);
-    LCVCamGetRegisterValue(REG_AGC_GAIN_OUTPUT, &regVal);
+    OscCamGetRegisterValue(REG_AGC_GAIN_OUTPUT, &regVal);
     printf("curGainFactor=%f\n", ((float)regVal)*0.0625f);
-    LCVCamGetRegisterValue(REG_AEC_EXP_OUTPUT, &regVal);
+    OscCamGetRegisterValue(REG_AEC_EXP_OUTPUT, &regVal);
     printf("curExpTime=%hu\n", (34*regVal)/1000);
     if(cgi.args.bReg_supplied)
       {
-	LCVCamGetRegisterValue(cgi.args.reg, &regVal);
+	OscCamGetRegisterValue(cgi.args.reg, &regVal);
 	printf("curRegisterValue=%hu\n", regVal);
       }
 #ifdef DBG_SPAM
-    LCVLog(DEBUG, "Closing...!\n");
+    OscLog(DEBUG, "Closing...!\n");
 #endif
     /* ----------------- Unload -------------------*/	 
  exit_unload:
  fb_err:
-    LCVUnloadDependencies(cgi.hFramework,
+    OscUnloadDependencies(cgi.hFramework,
 			  deps,
-			  sizeof(deps)/sizeof(struct LCV_DEPENDENCY));
+			  sizeof(deps)/sizeof(struct OSC_DEPENDENCY));
  dep_err:
-    LCVDestroy(cgi.hFramework);
+    OscDestroy(cgi.hFramework);
     return 0;
 }

@@ -2,7 +2,6 @@
 #
 # Makefile for the Frame Capture Demo CGI
 #
-# Author: Markus Berner
 # 
 ############################################################################
 
@@ -13,13 +12,13 @@ TARGET_SUFFIX = _target
 
 # Host-Compiler executables and flags
 HOST_CC = gcc 
-HOST_CFLAGS = $(HOST_FEATURES) -Wall -pedantic -DLCV_HOST -g
+HOST_CFLAGS = $(HOST_FEATURES) -Wall -pedantic -DOSC_HOST -g
 HOST_LDFLAGS = -lm
 
 # Cross-Compiler executables and flags
 TARGET_CC = bfin-uclinux-gcc 
-TARGET_CFLAGS = -Wall -pedantic -O2 -DLCV_TARGET
-TARGETDBG_CFLAGS = -Wall -pedantic -ggdb3 -DLCV_TARGET
+TARGET_CFLAGS = -Wall -pedantic -O2 -DOSC_TARGET
+TARGETDBG_CFLAGS = -Wall -pedantic -ggdb3 -DOSC_TARGET
 TARGET_LDFLAGS = -Wl,-elf2flt="-s 1048510"
 
 # Source files of the application
@@ -37,9 +36,9 @@ all: $(OUT)
 $(OUT): target host
 
 # Compiles the executable
-target: $(SOURCES) inc/*.h lib/liblcv_target.a $(WEB_FILES)
+target: $(SOURCES) inc/*.h lib/libosc_target.a $(WEB_FILES)
 	@echo "Compiling for target.."
-	$(TARGET_CC) $(SOURCES) lib/liblcv_target.a $(TARGET_CFLAGS) \
+	$(TARGET_CC) $(SOURCES) lib/libosc_target.a $(TARGET_CFLAGS) \
 	$(TARGET_LDFLAGS) -o $(OUT)$(TARGET_SUFFIX)
 	@echo "Target CGI done."
 	cp $(OUT)$(TARGET_SUFFIX) /tftpboot/$(OUT)
@@ -48,16 +47,16 @@ target: $(SOURCES) inc/*.h lib/liblcv_target.a $(WEB_FILES)
 	tar cfz targetFiles/www.tar.gz -C www .
 	cp targetFiles/www.tar.gz /tftpboot
 
-targetdbg: $(SOURCES) inc/*.h lib/liblcv_target.a $(WEB_FILES)
+targetdbg: $(SOURCES) inc/*.h lib/libosc_target.a $(WEB_FILES)
 	@echo "Compiling for target.."
-	$(TARGET_CC) $(SOURCES) lib/liblcv_target.a $(TARGETDBG_CFLAGS) \
+	$(TARGET_CC) $(SOURCES) lib/libosc_target.a $(TARGETDBG_CFLAGS) \
 	$(TARGET_LDFLAGS) -o $(OUT)$(TARGET_SUFFIX)
 	@echo "Target CGI done."
 	cp $(OUT)$(TARGET_SUFFIX) /tftpboot/$(OUT)	
 	
-host: $(SOURCES) inc/*.h lib/liblcv_host.a  $(WEB_FILES) $(EMU_FILES)
+host: $(SOURCES) inc/*.h lib/libosc_host.a  $(WEB_FILES) $(EMU_FILES)
 	@echo "Compiling for host.."
-	$(HOST_CC) $(SOURCES) lib/liblcv_host.a $(HOST_CFLAGS) \
+	$(HOST_CC) $(SOURCES) lib/libosc_host.a $(HOST_CFLAGS) \
 	$(HOST_LDFLAGS) -o $(OUT)$(HOST_SUFFIX)
 	@echo "Host executable done."
 	@cp $(OUT)$(HOST_SUFFIX) $(OUT)
@@ -68,7 +67,7 @@ host: $(SOURCES) inc/*.h lib/liblcv_host.a  $(WEB_FILES) $(EMU_FILES)
 	cp  www/* /var/www -r
 
 get:
-	cp ../framework/staging/* . -r
+	cp ../oscar/staging/* . -r
 	@echo "Framework fetched."
 	
 # Cleanup

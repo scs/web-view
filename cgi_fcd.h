@@ -1,14 +1,13 @@
 /*! @file cgi_fcd.h
  * @brief Header file of the CGI used for frame capture device demo.
  * 
- * @author Markus Berner
  */
 
 #ifndef CGI_FCD_H_
 #define CGI_FCD_H_
 
-#define LCV_CAM_MAX_IMG_WIDTH 752
-#define LCV_CAM_MAX_IMG_HEIGHT 480
+#define OSC_CAM_MAX_IMG_WIDTH 752
+#define OSC_CAM_MAX_IMG_HEIGHT 480
 
 /*! @brief The name of this application. */
 #define APP_NAME "CGI_FCD"
@@ -152,18 +151,18 @@ struct CGI_FCD
   char strArgumentsTemp[MAX_ARGUMENT_STRING_LEN];
   
   /*! @brief Temporary data buffer for the images to be saved. */
-  uint8 frameBuf[LCV_CAM_MAX_IMG_WIDTH*LCV_CAM_MAX_IMG_HEIGHT];
+  uint8 frameBuf[OSC_CAM_MAX_IMG_WIDTH*OSC_CAM_MAX_IMG_HEIGHT];
   /*! @brief Temporary data buffer for the color image to be saved. */
-  uint8 imgBuf[LCV_CAM_MAX_IMG_WIDTH*LCV_CAM_MAX_IMG_HEIGHT*3];
+  uint8 imgBuf[OSC_CAM_MAX_IMG_WIDTH*OSC_CAM_MAX_IMG_HEIGHT*3];
   /*! @brief Time stamp of the captured image. */
   uint32 timeStamp;
   /*! @brief The GET/POST arguments of the CGI. */
   struct ARGUMENT_DATA	args;
-#if defined(LCV_HOST) || defined(LCV_SIM)
+#if defined(OSC_HOST) || defined(OSC_SIM)
   /*! @brief Handle to the file name reader used to feed the camera
     with images on the host. */
   void *hFileNameReader;
-#endif /* LCV_HOST or LCV_SIM */
+#endif /* OSC_HOST or OSC_SIM */
 };
 
 #endif /*CGI_FCD_H_*/
