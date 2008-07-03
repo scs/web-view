@@ -75,7 +75,6 @@ clean:
 	rm -f $(OUT)$(HOST_SUFFIX) $(OUT)$(TARGET_SUFFIX) $(OUT)
 	rm -f *.o *.cgi *.gdb
 	rm www/cgi-bin/$(OUT)
-	rm www.tar
 	@echo "Directory cleaned"
 
 	
