@@ -27,7 +27,8 @@ struct OSC_DEPENDENCY deps[] = {
         {"sup", OscSupCreate, OscSupDestroy},
         {"bmp", OscBmpCreate, OscBmpDestroy},
         {"cam", OscCamCreate, OscCamDestroy},
-	{"vis", OscVisCreate, OscVisDestroy}
+	{"vis", OscVisCreate, OscVisDestroy},
+	{"gpio", OscGpioCreate, OscGpioDestroy}
 };
 
 /*! @brief All potential arguments supplied to this CGI. */
@@ -427,13 +428,20 @@ int main()
 #endif
     
     /* ---------------- Frame capture -------------*/
-    err = OscCamSetupCapture(0, OSC_CAM_TRIGGER_MODE_MANUAL);
+    err = OscCamSetupCapture(0);
+    if(err != SUCCESS)
+      {
+	OscLog(ERROR, APP_NAME ": Unable to setup frame! (%d)\n", err);
+	goto exit_unload;
+      }
+    
+    err = OscGpioTriggerImage();
     if(err != SUCCESS)
       {
 	OscLog(ERROR, APP_NAME ": Unable to trigger frame! (%d)\n", err);
 	goto exit_unload;
       }
-    
+
     err = OscCamReadPicture(0, &pPic, 0, 10000);
     if(err != SUCCESS)
       {
@@ -469,7 +477,7 @@ int main()
 	picFile.type = OSC_PICTURE_GREYSCALE;
       } else {
 	picFile.data = cgi.imgBuf;
-	picFile.type = OSC_PICTURE_RGB_24;
+	picFile.type = OSC_PICTURE_BGR_24;
 
       }
     picFile.width = OSC_CAM_MAX_IMG_WIDTH;
