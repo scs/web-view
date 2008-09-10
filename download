@@ -5,4 +5,4 @@ then
   echo "Usage: download <destination IP>"
   exit
 fi
-rcp targetFiles/* root@$1:/app 
+scp targetFiles/* root@$1:/app 
