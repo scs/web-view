@@ -53,15 +53,14 @@ enum EnArgumentType
 struct ARGUMENT
 {
 	/*! @brief The name of the argument. */
-	char				strName[MAX_ARG_NAME_LEN];
+	char strName[MAX_ARG_NAME_LEN];
 	/*! brief The data type of the argument. */
 	enum EnArgumentType enType;
-	/*! @brief Pointer to the variable this argument should be parsed 
-	 * to.*/
-	void				*pData;
+	/*! @brief Pointer to the variable this argument should be parsed to.*/
+	void *pData;
 	/*! @brief Pointer to a variable storing whether this argument has
 	 * been supplied or not.*/
-	bool                *pbSupplied;
+	bool *pbSupplied;
 };
 
 /*! @brief Holds the values parsed from the argument string. */
@@ -69,12 +68,12 @@ struct ARGUMENT_DATA
 {
 	/*! @brief The maximum gain during auto-exposure to be set.*/
 	float maxGain;
-	/*! @brief Says whether the argument maxGain has been 
+	/*! @brief Says whether the argument maxGain has been
 	 * supplied or not. */
 	bool bMaxGain_supplied;
 	/*! @brief The manual gain to be set.*/
 	float manGain;
-	/*! @brief Says whether the argument manGain has been 
+	/*! @brief Says whether the argument manGain has been
 	 * supplied or not. */
 	bool bManGain_supplied;
 	/*! @brief Maximum exposure time during auto-exposure. */
@@ -139,29 +138,27 @@ struct ARGUMENT_DATA
 	bool bVerticalFlip_supplied;
 };
 
-/*! @brief Main object structure of the CGI. Contains all 'global'
- * variables. */
+/*! @brief Main object structure of the CGI. Contains all 'global' variables. */
 struct CGI_FCD
 {
-  /*! @brief Handle to the framework. */
-  void *hFramework;
-  /*! @brief The raw argument string as supplied by the web server. */
-  char strArgumentsRaw[MAX_ARGUMENT_STRING_LEN];
-  /*! @brief Temporary variable for argument extraction. */
-  char strArgumentsTemp[MAX_ARGUMENT_STRING_LEN];
-  
-  /*! @brief Temporary data buffer for the images to be saved. */
-  uint8 frameBuf[OSC_CAM_MAX_IMG_WIDTH*OSC_CAM_MAX_IMG_HEIGHT];
-  /*! @brief Temporary data buffer for the color image to be saved. */
-  uint8 imgBuf[OSC_CAM_MAX_IMG_WIDTH*OSC_CAM_MAX_IMG_HEIGHT*3];
-  /*! @brief Time stamp of the captured image. */
-  uint32 timeStamp;
-  /*! @brief The GET/POST arguments of the CGI. */
-  struct ARGUMENT_DATA	args;
+	/*! @brief Handle to the framework. */
+	void *hFramework;
+	/*! @brief The raw argument string as supplied by the web server. */
+	char strArgumentsRaw[MAX_ARGUMENT_STRING_LEN];
+	/*! @brief Temporary variable for argument extraction. */
+	char strArgumentsTemp[MAX_ARGUMENT_STRING_LEN];
+	
+	/*! @brief Temporary data buffer for the images to be saved. */
+	uint8 frameBuf[OSC_CAM_MAX_IMG_WIDTH*OSC_CAM_MAX_IMG_HEIGHT];
+	/*! @brief Temporary data buffer for the color image to be saved. */
+	uint8 imgBuf[OSC_CAM_MAX_IMG_WIDTH*OSC_CAM_MAX_IMG_HEIGHT*3];
+	/*! @brief Time stamp of the captured image. */
+	uint32 timeStamp;
+	/*! @brief The GET/POST arguments of the CGI. */
+	struct ARGUMENT_DATA    args;
 #if defined(OSC_HOST) || defined(OSC_SIM)
-  /*! @brief Handle to the file name reader used to feed the camera
-    with images on the host. */
-  void *hFileNameReader;
+	/*! @brief Handle to the file name reader used to feed the camera with images on the host. */
+	void *hFileNameReader;
 #endif /* OSC_HOST or OSC_SIM */
 };
 
