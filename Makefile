@@ -53,7 +53,7 @@ targetdbg: $(SOURCES) inc/*.h lib/libosc_target.a $(WEB_FILES)
 	$(TARGET_LDFLAGS) -o $(OUT)$(TARGET_SUFFIX)
 	@echo "Target CGI done."
 	cp $(OUT)$(TARGET_SUFFIX) /tftpboot/$(OUT)	
-	
+
 host: $(SOURCES) inc/*.h lib/libosc_host.a  $(WEB_FILES) $(EMU_FILES)
 	@echo "Compiling for host.."
 	$(HOST_CC) $(SOURCES) lib/libosc_host.a $(HOST_CFLAGS) \
@@ -69,12 +69,11 @@ host: $(SOURCES) inc/*.h lib/libosc_host.a  $(WEB_FILES) $(EMU_FILES)
 get:
 	cp ../oscar/staging/* . -r
 	@echo "Framework fetched."
-	
+
 # Cleanup
 clean:	
 	rm -f $(OUT)$(HOST_SUFFIX) $(OUT)$(TARGET_SUFFIX) $(OUT)
 	rm -f *.o *.cgi *.gdb
 	rm www/cgi-bin/$(OUT)
+	rm www.tar.gz
 	@echo "Directory cleaned"
-
-	
