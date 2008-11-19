@@ -41,18 +41,18 @@ target: $(SOURCES) inc/*.h lib/libosc_target.a $(WEB_FILES)
 	$(TARGET_CC) $(SOURCES) lib/libosc_target.a $(TARGET_CFLAGS) \
 	$(TARGET_LDFLAGS) -o $(OUT)$(TARGET_SUFFIX)
 	@echo "Target CGI done."
-	cp $(OUT)$(TARGET_SUFFIX) /tftpboot/$(OUT)
+	! [ -d /tftpboot ] && true || cp $(OUT)$(TARGET_SUFFIX) /tftpboot/$(OUT)
 	@mkdir -p www/cgi-bin
 	@cp $(OUT)$(TARGET_SUFFIX) www/cgi-bin/$(OUT)
 	tar cfz targetFiles/www.tar.gz -C www .
-	cp targetFiles/www.tar.gz /tftpboot
+	! [ -d /tftpboot ] && true || cp targetFiles/www.tar.gz /tftpboot
 
 targetdbg: $(SOURCES) inc/*.h lib/libosc_target.a $(WEB_FILES)
 	@echo "Compiling for target.."
 	$(TARGET_CC) $(SOURCES) lib/libosc_target.a $(TARGETDBG_CFLAGS) \
 	$(TARGET_LDFLAGS) -o $(OUT)$(TARGET_SUFFIX)
 	@echo "Target CGI done."
-	cp $(OUT)$(TARGET_SUFFIX) /tftpboot/$(OUT)	
+	! [ -d /tftpboot ] && true || cp $(OUT)$(TARGET_SUFFIX) /tftpboot/$(OUT)	
 
 host: $(SOURCES) inc/*.h lib/libosc_host.a  $(WEB_FILES) $(EMU_FILES)
 	@echo "Compiling for host.."
@@ -64,7 +64,7 @@ host: $(SOURCES) inc/*.h lib/libosc_host.a  $(WEB_FILES) $(EMU_FILES)
 	cp www/cgi-bin/* /var/www/cgi-bin/
 	cp $(EMU_FILES) /var/www/cgi-bin/
 	@chmod a+x /var/www/cgi-bin/$(OUT)
-	cp  www/* /var/www -r
+	cp www/* /var/www -r
 
 get:
 	cp ../../oscar/staging/* . -r
