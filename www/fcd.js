@@ -161,7 +161,7 @@ function onLoad()
     config.b12To10BitCompanding = elem("Compand12To10").checked;
     config.bRowWiseNoiseCorr = elem("rowWiseNoiseCorr").checked;
 
-    configOption = elem("configOption").selectedIndex;
+    config.configOption = elem("configOption").selectedIndex;
     onChangeConfigOption();
 
     updateData();
