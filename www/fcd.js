@@ -159,7 +159,6 @@ function onLoad()
     onChangeAutoGain();
 
     config.b12To10BitCompanding = elem("Compand12To10").checked;
-    config.bHighDynamicRange = elem("highDynamicRange").checked;
     config.bRowWiseNoiseCorr = elem("rowWiseNoiseCorr").checked;
 
     configOption = elem("configOption").selectedIndex;
@@ -241,12 +240,6 @@ function updateData()
     {
 	config.b12To10BitCompanding = !config.b12To10BitCompanding;
 	parameters = addURIQueryVal(parameters, "compand12To10", config.b12To10BitCompanding);
-    }
-
-    if(config.bHighDynamicRange != elem("highDynamicRange").checked)
-    {
-	config.bHighDynamicRange = !config.bHighDynamicRange;
-	parameters = addURIQueryVal(parameters, "highDynamicRange", config.bHighDynamicRange);
     }
 
     if(config.bRowWiseNoiseCorr != elem("rowWiseNoiseCorr").checked)
