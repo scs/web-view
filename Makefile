@@ -10,6 +10,20 @@ OUT = fcd.cgi
 HOST_SUFFIX = _host
 TARGET_SUFFIX = _target
 
+# Disable make's built-in rules
+MAKEFLAGS += -r
+
+# this includes the framework configuration
+-include .config
+
+# decide whether we are building or dooing something other like cleaning or configuring
+ifeq ($(filter $(MAKECMDGOALS), clean distclean config), )
+  # check whether a .config file has been found
+  ifeq ($(filter .config, $(MAKEFILE_LIST)), )
+    $(error "Cannot make the target '$(MAKECMDGOALS)' without configuring the application. Please run make config to do this.")
+  endif
+endif
+
 # Host-Compiler executables and flags
 HOST_CC = gcc 
 HOST_CFLAGS = $(HOST_FEATURES) -Wall -pedantic -DOSC_HOST -g
@@ -66,14 +80,37 @@ host: $(SOURCES) inc/*.h lib/libosc_host.a  $(WEB_FILES) $(EMU_FILES)
 	@chmod a+x /var/www/cgi-bin/$(OUT)
 	cp www/* /var/www -r
 
-get:
-	cp ../oscar/staging/* . -r
-	@echo "Framework fetched."
+
+# Target to explicitly start the configuration process
+.PHONY : config
+config :
+	@ ./configure
+	@ $(MAKE) --no-print-directory get
+
+# Set symlinks to the framework
+.PHONY : get
+get :
+	@ rm -rf inc lib
+	@ ln -s $(CONFIG_FRAMEWORK)/staging/inc ./inc
+	@ ln -s $(CONFIG_FRAMEWORK)/staging/lib ./lib
+	@ echo "Configured Oscar framework."
+
+# deploying to the device
+.PHONY : deploy
+deploy : $(OUT)$(TARGET_SUFFIX)
+	@ scp -rp targetFiles/www.tar.gz root@$(CONFIG_TARGET_IP):/mnt/app/ || echo -n ""
+	@ echo "Application deployed."
 
 # Cleanup
-clean:	
-	rm -f $(OUT)$(HOST_SUFFIX) $(OUT)$(TARGET_SUFFIX) $(OUT)
-	rm -f *.o *.cgi *.gdb
-	rm www/cgi-bin/$(OUT)
-	rm www.tar.gz
-	@echo "Directory cleaned"
+.PHONY : clean
+clean :	
+	rm -f $(OUT)$(HOST_SUFFIX) $(OUT)$(TARGET_SUFFIX)
+	rm -f *.o *.gdb
+	@ echo "Directory cleaned"
+
+# Cleans everything not intended for source distribution
+.PHONY : distclean
+distclean : clean
+	rm -f .config
+	rm -rf inc lib
+
