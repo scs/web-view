@@ -67,7 +67,7 @@ host: $(SOURCES) inc/*.h lib/libosc_host.a  $(WEB_FILES) $(EMU_FILES)
 	cp www/* /var/www -r
 
 get:
-	cp ../../oscar/staging/* . -r
+	cp ../oscar/staging/* . -r
 	@echo "Framework fetched."
 
 # Cleanup
