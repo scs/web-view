@@ -31,18 +31,6 @@
 /*! @brief This stores all variables needed by the algorithm. */
 struct TEMPLATE data;
 
-/*! @brief The framework module dependencies of this application. */
-struct OSC_DEPENDENCY deps[] = {
-	{ "log", OscLogCreate, OscLogDestroy },
-	{ "sup", OscSupCreate, OscSupDestroy },
-	{ "bmp", OscBmpCreate, OscBmpDestroy },
-	{ "cam", OscCamCreate, OscCamDestroy },
-	{ "hsm", OscHsmCreate, OscHsmDestroy },
-	{ "ipc", OscIpcCreate, OscIpcDestroy },
-	{ "vis", OscVisCreate, OscVisDestroy },
-	{ "gpio", OscGpioCreate, OscGpioDestroy }
-};
-
 /*********************************************************************//*!
  * @brief Initialize everything so the application is fully operable
  * after a call to this function.
@@ -57,16 +45,22 @@ static OSC_ERR init(const int argc, const char * argv[])
 	memset(&data, 0, sizeof(struct TEMPLATE));
 	
 	/******* Create the framework **********/
-	err = OscCreate(&data.hFramework);
+	err = OscCreate(
+		&OscModule_log,
+		&OscModule_sup,
+		&OscModule_bmp,
+		&OscModule_cam,
+		&OscModule_hsm,
+		&OscModule_ipc,
+		&OscModule_vis,
+		&OscModule_gpio
+	);
 	if (err < 0)
 	{
 		fprintf(stderr, "%s: Unable to create framework.\n", __func__);
 		return err;
 	}
-	
-	/******* Load the framework module dependencies. **********/
-	err = OscLoadDependencies(data.hFramework, deps, sizeof(deps)/sizeof(struct OSC_DEPENDENCY));
-	
+		
 	if (err != SUCCESS)
 	{
 		fprintf(stderr, "%s: ERROR: Unable to load dependencies! (%d)\n", __func__, err);
@@ -147,9 +141,8 @@ fb_err:
 #if defined(OSC_HOST) || defined(OSC_SIM)
 frd_err:
 #endif
-	OscUnloadDependencies(data.hFramework, deps, sizeof(deps)/sizeof(struct OSC_DEPENDENCY));
 dep_err:
-	OscDestroy(&data.hFramework);
+	OscDestroy();
 	
 	return err;
 }
@@ -157,9 +150,7 @@ dep_err:
 OSC_ERR Unload()
 {
 	/******** Unload the framework module dependencies **********/
-	OscUnloadDependencies(data.hFramework, deps, sizeof(deps)/sizeof(struct OSC_DEPENDENCY));
-	
-	OscDestroy(data.hFramework);
+	OscDestroy();
 	
 	return SUCCESS;
 }
