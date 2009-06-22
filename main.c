@@ -166,6 +166,7 @@ int main(const int argc, const char * argv[])
 {
 	OSC_ERR err = SUCCESS;
 	
+	OscMark();
 	err = init(argc, argv);
 	if (err != SUCCESS)
 	{
@@ -177,6 +178,7 @@ int main(const int argc, const char * argv[])
 	OscLogSetConsoleLogLevel(INFO);
 	OscLogSetFileLogLevel(WARN);
 	
+	OscMark();
 	StateControl();
 	
 	Unload();
