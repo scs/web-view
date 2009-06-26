@@ -25,8 +25,10 @@
 
 #include "template.h"
 
-enum MainStateEvents {
-	FRAMESEQ_EVT,       /* frame ready to process (before setting up next frame capture) */
+enum events {
+	event_writeImage,
+	event_captureImage,
+	event_activate
 	FRAMEPAR_EVT,       /* frame ready to process (parallel to next capture) */
 	IPC_GET_APP_STATE_EVT, /* Webinterface asks for the current application state. */
 	IPC_GET_COLOR_IMG_EVT, /* Webinterface asks for a color image. */

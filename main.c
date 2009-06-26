@@ -164,40 +164,37 @@ OSC_ERR Unload()
 	return SUCCESS;
 }
 
-/*OSC_ERR test() {
-	OscExceptionBegin();
-	
-	OscTry();
-	
-	OscCatch();
-	
-	OscExceptionEnd();
-};*/
+OscFunction(true_f)
+OscFunctionCatch()
+OscFunctionEnd()
 
-OSC_ERR true_f() {
-OscFunctionBegin
-OscFunctionCatch
-OscFunctionEnd
-};
-
-OSC_ERR false_f() {
-OscFunctionBegin
+OscFunction(false_f)
 	OscFail_s();
-OscFunctionCatch
-OscFunctionEnd
-};
+OscFunctionCatch()
+OscFunctionEnd()
 
-OSC_ERR test() {
-OscFunctionBegin
+OscFunction(test)
+	OscMark();
 	OscCall(true_f);
 	OscMark();
 	OscCall(false_f);
+	OscMark();
 	
-OscFunctionCatch
+OscFunctionCatch()
 	OscMark_m("Bääääh!");
+	OscRecover();
 	
-OscFunctionEnd
-};
+OscFunctionEnd()
+
+OscFunction(stuff)
+	OscCall(test);
+	OscFail_m("Failing anyway ...")
+	
+OscFunctionCatch()
+	OscMark_m("Uääääh!");
+	OscFail_m("Even failing fails ...");
+	
+OscFunctionEnd()
 
 /*********************************************************************//*!
  * @brief Program entry
@@ -210,8 +207,11 @@ int main(const int argc, const char * argv[])
 {
 	OSC_ERR err = SUCCESS;
 	
-	test();
-	OscMark_m("Done!");
+	OscMark_m("Testing ...!");
+	err = stuff();
+	OscMark_m("Done! (%d)", err);
+	
+	return 0;
 	
 	err = init(argc, argv);
 	if (err != SUCCESS)

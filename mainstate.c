@@ -28,9 +28,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-const Msg mainStateMsg[] = {
-	{ FRAMESEQ_EVT },
-	{ FRAMEPAR_EVT },
+const Msg mainStateMsg[] = {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
 	{ IPC_GET_APP_STATE_EVT },
 	{ IPC_GET_COLOR_IMG_EVT },
 	{ IPC_GET_RAW_IMG_EVT },
@@ -47,68 +45,6 @@ void ThrowEvent(struct MainState *pHsm, unsigned int evt)
 {
 	const Msg *pMsg = &mainStateMsg[evt];
 	HsmOnEvent((Hsm*)pHsm, pMsg);
-}
-
-/*********************************************************************//*!
- * @brief Checks for IPC events, schedules their handling and
- * acknowledges any executed ones.
- * 
- * @param pMainState Initalized HSM main state variable.
- * @return 0 on success or an appropriate error code.
- *//*********************************************************************/
-static OSC_ERR HandleIpcRequests(MainState *pMainState)
-{
-	OSC_ERR err;
-	uint32 paramId;
-	
-	err = CheckIpcRequests(&paramId);
-	if (err == SUCCESS)
-	{
-		/* We have a request. See to it that it is handled
-		 * depending on the state we're in. */
-		switch(paramId)
-		{
-		case GET_APP_STATE:
-			/* Request for the current state of the application. */
-			ThrowEvent(pMainState, IPC_GET_APP_STATE_EVT);
-			break;
-		case GET_COLOR_IMG:
-			/* Request for the live image. */
-			ThrowEvent(pMainState, IPC_GET_COLOR_IMG_EVT);
-			break;
-		case GET_RAW_IMG:
-			/* Request for the live image. */
-			ThrowEvent(pMainState, IPC_GET_RAW_IMG_EVT);
-			break;
-		case SET_CAPTURE_MODE:
-			/* Set the debayering option. */
-			ThrowEvent(pMainState, IPC_SET_CAPTURE_MODE_EVT);
-			break;
-		default:
-			OscLog(ERROR, "%s: Unkown IPC parameter ID (%d)!\n", __func__, paramId);
-			data.ipc.enReqState = REQ_STATE_NACK_PENDING;
-			break;
-		}
-	}
-	else if (err == -ENO_MSG_AVAIL)
-	{
-		/* No new message available => do nothing. */
-	}
-	else
-	{
-		/* Error.*/
-		OscLog(ERROR, "%s: IPC request error! (%d)\n", __func__, err);
-		return err;
-	}
-	
-	/* Try to acknowledge the new or any old unacknowledged
-	 * requests. It may take several tries to succeed.*/
-	err = AckIpcRequests();
-	if (err != SUCCESS)
-	{
-		OscLog(ERROR, "%s: IPC acknowledge error! (%d)\n", __func__, err);
-	}
-	return err;
 }
 
 Msg const *MainState_top(MainState *me, Msg *msg)

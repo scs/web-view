@@ -31,30 +31,32 @@ OscFunction(processRequest)
 	OSC_IPC_CHAN_ID ipcChannel;
 	struct cgiBuffer buffer;
 	
-	OscIpcRegisterChannel(&ipcChannel, CGI_SOCKET_PATH, 0);
+	OscCall(OscIpcRegisterChannel, &ipcChannel, CGI_SOCKET_PATH, 0);
 	
-	cgiBuffer.length = fread(&buffer, 1, sizeof buffer, stdin);
+	cgiBuffer.length = fread(&buffer.data, 1, sizeof buffer.data, stdin);
+	OscAssert(ferror(stdin) == 0);
 	
+	OscIpcSetParam(ipcChannel, &buffer, ipcParamIds_putRequest, sizeof buffer);
+	OscIpcGetParam(ipcChannel, &buffer, ipcParamIds_getResponse, sizeof buffer);
 	
-	OscIpcSetParam(ipcChannel, &buffer, SET_CAPTURE_MODE, sizeof(pArgs->bDoCaptureColor));
+	fwrite(&buffer.data, 1, sizeof buffer.data, stdin);
+	OscAssert(ferror(stdin) == 0);
+	
 OscFunctionFinally()
-	
+	OscCall(OscIpcUnregisterChannel, ipcChannel);
 OscFunctionEnd()
 
 OscFunction(mainFunction)
-	struct OSC_FRAMEWORK * pFramework;
-	
-	OscCall(OscCreate, &pFramework);
-	OscCall(OscLogCreate, pFramework);
-	OscCall(OscIpcCreate, pFramework);
+	OscCall(OscCreate, OscModule_log, OscModule_ipc);
 	
 	OscCall(processRequest);
 OscFunctionFinally()
-	OscCall(OscIpcDestroy, pFramework);
-	OscCall(OscLogDestroy, pFramework);
-	OscCall(OscDistroy, pFramework);
+	OscDestroy();
 OscFunctionEnd()
 
 int main(int argc, char ** argv) {
-	return (int) mainFunction();
+	if (mainFunction() == SUCCESS)
+		return 0;
+	else
+		return 1;
 }
