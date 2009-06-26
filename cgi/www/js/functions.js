@@ -5,7 +5,7 @@ Array.prototype.joinLines = function () {
 		res += "\n";
 	
 	return res;
-}
+};
 
 String.prototype.splitLines = function () {
 	var list = this.split("\n");
@@ -14,7 +14,32 @@ String.prototype.splitLines = function () {
 		list.pop();
 	
 	return list;
-}
+};
+
+// Converts a number to a string with a specified number of digits before and after the dot together.
+Number.prototype.toPrecision2 = function (digits) {
+	var parts = this.toString().split(".");
+	var p1 = parts[0], p2 = parts[1] || "", pp = p1 + p2;
+	var res = p1;
+	
+	while (pp.slice(0, 1) == "0") {
+		digits += 1;
+		pp = pp.slice(1);
+	}
+	
+	if (p1.length < digits) {
+		res += "." + p2;
+		digits += 1; // Because of the dot.
+	}
+	
+	res = res.slice(0, digits);
+	digits = Math.max(digits, p1.length)
+	
+	while (res.length < digits)
+		res += "0";
+	
+	return res;
+};
 
 function getSearchArgs() {
 	var parts = document.location.search.slice(1).split("&");
@@ -56,13 +81,61 @@ function createElement(tag, attrs, contents) {
 }
 
 function buildControls() {
-	$("input([type=checkbox], [type=radio]):parent").each(function () {
+	var inputs = $(".input:parent")
+	var ws = $(document.createTextNode(" "));
+	
+	inputs.filter("[type=checkbox], [type=radio]").each(function () {
 		var id = $(this).attr("name") + "+" + $(this).attr("value");
+		var label = createElement("label", { "for" : id }, $(this).contents());
+		var elem = createElement("input", {
+			"name" : $(this).attr("name"),
+			"type" : $(this).attr("type"),
+			"id" : id
+		});
 		
-		$(this).attr("id", id)
-		$(this).after(createElement("label", { "for" : id }, $(this).contents()));
-		$(this).empty();
-	})
+		label.addClass("label-after");
+		
+		$(this).after(label);
+		$(this).replaceWith(elem);
+	});
+	
+	inputs.filter("[type=slider]").each(function () {
+		var range = $(this).attr("value").split(" ");
+		var value = createElement("span");
+		var label = createElement("span", { }, $(this).contents());
+		var elem = createElement("div", {
+			"class" : $(this).attr("class"),
+			"type" : $(this).attr("type")
+		});
+		
+		label.addClass("label-before");
+		value.addClass("label-after");
+		
+		$(this).before(label);
+		$(this).after(value);
+		$(this).replaceWith(createElement("div", {
+			"style" : "display: inline-block; vertical-align: middle; position: relative; top: -2px"
+		}, elem));
+		
+		elem.slider({
+			"animate" : true,
+			"min" : 0,
+			"max" : 1,
+			"step" : 1 / 1000000,
+			"range" : "min",
+			"slide" : function (event, ui) {
+				var a = parseFloat(range[0]), b = parseFloat(range[1]);
+				var x = ui.value;
+				
+				if (range[2] == "log")
+					x = Math.exp((x * (Math.log(b) - Math.log(a)) + Math.log(a)));
+				else
+					x = x * (b - a) + a;
+				
+				value.text(x.toPrecision2(2));
+			}
+		});
+	});
 }
 
 // Removes duplicate elements from an array.

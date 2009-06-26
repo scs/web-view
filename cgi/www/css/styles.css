@@ -2,6 +2,7 @@ body {
 	font-family: Trebuchet MS, Helvetica, Sans;
 	font-size: 14px;
 	margin: 0px;
+	background-color: rgb(165, 175, 192);
 }
 
 h3 {
@@ -13,9 +14,36 @@ h3 {
 .big-box {
 	border-style: solid;
 	border-width: 2px;
-	border-color: red;
+	border-color: rgb(143, 8, 0);
+	background-color: rgb(235, 237, 244);
 	padding: 8px;
 	margin:8px;
+}
+
+.split {
+	height: 0px;
+	display: table;
+	width: 100%;
+	margin: 0px;
+	padding: 0px;
+	table-layout: fixed;
+}
+
+.split > div {
+	height: inherit;
+	display: table-cell;
+}
+
+.split > div > div {
+	height: 100%;
+}
+
+.label-before {
+	margin-right: 4px;
+}
+
+.label-after {
+	margin-left: 4px;
 }
 
 #off {
@@ -72,7 +100,8 @@ h3 {
 	top: -8px;
 	float: right;
 	padding: 8px 6px;
-	background: #ddd;
+	background: #ff8c7f;
+/*	background: rgba(255, 255, 255, 0.75); */
 	font-size: 16px;
 }
 
