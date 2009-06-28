@@ -21,11 +21,11 @@
  * CGI. Contains all information relevant to IPC between these two.
  */
 
-#ifndef TEMPLATE_IPC_H_
-#define TEMPLATE_IPC_H_
+#ifndef CGI_H_
+#define CGI_H_
 
 /*! @brief The path of the unix domain socket used for IPC between the application and its user interface. */
-#define USER_INTERFACE_SOCKET_PATH "/tmp/IPCSocket.sock"
+#define CGI_SOCKET_PATH "/tmp/IPCSocket.sock"
 
 /* The parameter IDs to identify the different requests/responses. */
 enum ipcParamIds {
@@ -38,4 +38,4 @@ struct cgiBuffer {
 	char data[1024];
 };
 
-#endif /*TEMPLATE_IPC_H_*/
+#endif // #ifndef CGI_H_

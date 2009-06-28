@@ -110,37 +110,6 @@ OSC_ERR Unload();
 OSC_ERR StateControl(void);
 
 /*********************************************************************//*!
- * @brief Handle any incoming IPC requests.
- * 
- * Check for incoming IPC requests and return the corresponding parameter
- * ID if there is a request available.
- * 
- * @param pParamId Pointer to the variable where the parameter ID is
- * stored in case of success.
- * @return SUCCESS, -ENO_MSG_AVAILABLE or an appropriate error code.
- *//*********************************************************************/
-OSC_ERR CheckIpcRequests(uint32 *pParamId);
-
-/*********************************************************************//*!
- * @brief Acknowledge any pending IPC requests.
- * 
- * It may take several calls to this function for an acknowledge to
- * succeed.
- * 
- * @return SUCCESS or an appropriate error code.
- *//*********************************************************************/
-OSC_ERR AckIpcRequests();
-
-/*********************************************************************//*!
- * @brief Write an image of type fract16 to the result pointer of
- * the current request.
- * 
- * @param f16Image The image to be sent.
- * @param nPixels The number of pixels in the image.
- *//*********************************************************************/
-void IpcSendImage(fract16 *f16Image, uint32 nPixels);
-
-/*********************************************************************//*!
  * @brief Process a newly captured frame.
  * 
  * In the case of this template, this consists just of debayering the

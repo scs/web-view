@@ -24,9 +24,11 @@
 #include "cgi/cgi.h"
 #include <string.h>
 
+#define MAX_ARGS
+
 struct argument {
 	char * key;
-	enum * value;
+	char * value;
 };
 
 struct command {
@@ -41,9 +43,7 @@ static OSC_ERR CheckIpcRequests(uint32 * pParamId)
 	struct OSC_IPC_REQUEST *pReq = &pIpc->req;
 	
 	if (pIpc->enReqState != REQ_STATE_IDLE) {
-		/* This means we still have an unacknowledged request from
-		 * last time. Proceed with the acknowledgement instead of
-		 * already getting new ones.*/
+		// This means we still have an unacknowledged request from last time. Proceed with the acknowledgement instead of already getting new ones.
 		err = ENO_MSG_AVAIL;
 	}
 	
@@ -94,7 +94,7 @@ static OSC_ERR AckIpcRequests()
 }
 
 /*! @brief Strips whiltespace from the beginning and the end of a string and returns the new beginning of the string. Be advised, that the original string gets mangled! */
-char * static strtrim(char * str) {
+static char * strtrim(char * str) {
 	char * end = strchr(str, 0) - 1;
 
 	while (*str != 0 && strchr(" \t\n", *str) != NULL)
@@ -131,9 +131,16 @@ OscFunction(getArgument, char ** pKey, char ** pValue) {
 	*pValue = strtrim(colon);
 OscFunctionEnd()
 
-OscFunction(handleRequest, cgiBuffer * request, cgiBuffer * response)
+OscFunction(processRequest, FILE * request, FILE * response)
 	
 OscFunctionEnd()
+
+enum ipcState {
+	ipcState_uninitialized,
+	ipcState_listening,
+	ipcState_recieving,
+	ipcState_sending
+};
 
 /*********************************************************************//*!
  * @brief Checks for IPC events, schedules their handling and
@@ -143,28 +150,61 @@ OscFunctionEnd()
  * @return 0 on success or an appropriate error code.
  *//*********************************************************************/
 OscFunction(handleIpcRequests, MainState * pMainState)
-	uint32 paramId;
-	cgiBuffer responseBuffer;
+	static enum ipcState state = ipcState_uninitialized;
+	static int socketFd;
+	static int fd;
+	static uint8_t buffer[1024];
+	static * uint8_t pNext;
+	uint8_t * const pEnd = buffer + length(buffer);
 	
-	OscCall(CheckIpcRequests, &paramId);
-	
-	if (OscLastStatus() != ENO_MSG_AVAIL) {
-		// We have a request. See to it that it is handled depending on the state we're in.
+	if (ipcState == ipcState_uninitialized) {
+		int err;
+		struct sockaddr_un addr = { .sun_family = AF_UNIX };
 		
-		if (paramId == ipcParamIds_putRequest) {
+		OscAssert_m(strlen(CGI_SOCKET_PATH) >= sizeof (addr.sun_path), "Path too long.")
+		strcpy(addr.sun_path, pName);
+		
+		socketFd = socket(AF_UNIX, SOCK_STREAM, 0);
+		OscAssert_m(socketFd >= 0, "Cannot open a socket.");
+		
+		err = fcntl(socketFd, F_SETFL, O_NONBLOCK);
+		OscAssert_m(err >= 0, "Cannot set O_NONBLOCK.");
+		
+		err = bind(socketFd, (struct sockaddr *) &addr, SUN_LEN(&addr));
+		OscAssert_m(err >= 0, "Cannot bind to the socket.");
+		
+		err = listen(socketFd, 1);
+		OscAssert_m(err >= 0, "Cannot listen on the socket.");
+		
+		state = ipcState_listening;
+	} else if (ipcState == ipcState_listening) {
+		{
+			unsigned int remoteAddrLen;
+			struct sockaddr remoteAddr;
 			
-		} else if (paramId == ipcParamIds_putRequest) {
-			
-		} else {
-			data.ipc.enReqState = REQ_STATE_NACK_PENDING
-			OscFail_m("Unknown paramId: %d", paramId);
+			fd = accept(sock, &remoteAddr, &remoteAddrLen);
 		}
+		
+		if (fd < 0) {
+			OscAssert_m(errno != EAGAIN, "Error accepting a connection: %s", strerror(errno));
+		} else {
+			pNext = buffer;
+			state = ipcState_recieving;
+		}
+	} else if (ipcState == ipcState_recieving) {
+		ssize_t numRead;
+		
+		errno = 0;
+		numRead = read(fd, pNext, pEnd - pNext);
+		
+		if (numRead > 0) {
+			pNext += numRead;
+		} else if (numRead == 0) {
+			OscAssert_m(errno == 0, "Error while reading from socket: %s", strerror(errno));
+			OscCall(processRequest(buffer));
+			state = ipcState_sending;
+		}
+	} else if (ipcState == ipcState_sending) {
+		
 	}
-	
-	// Try to acknowledge the new or any old unacknowledged requests. It may take several tries to succeed.
-	err = AckIpcRequests();
-	if (err != SUCCESS)
-		OscLog(ERROR, "%s: IPC acknowledge error! (%d)\n", __func__, err);
-	
-	return err;
 OscFunctionEnd()
