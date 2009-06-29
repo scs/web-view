@@ -73,25 +73,33 @@ OscFunction(getArgument, char ** pKey, char ** pValue, char ** pBuffer)
 	char * newline, * colon;
 	
 	newline = strchr(*pBuffer, '\n');
+	OscAssert_m(newline != NULL, "No newline found.");
 	*newline = 0;
+	
 	colon = strchr(*pBuffer, 0);
+	OscAssert_m(colon != NULL, "No colon found.");
 	*colon = 0;
-	
-	
-	///////////////
-	OscAssert_e(fgets(buffer, sizeof buffer, file) == NULL, -EUNABLE_TO_READ)
-	
-	colon = strchr(buffer, ':');
-	
-	*colon = 0;
-	colon += 1;
-	
-	*pKey = strtrim(buffer);
-	*pValue = strtrim(colon);
+		
+	*pKey = strtrim(*pBuffer);
+	*pValue = strtrim(colon + 1);
+	*pBuffer = newline + 1;
 OscFunctionEnd()
 
-OscFunction(processRequest, FILE * request, FILE * response)
+OscFunction(processRequest, char ** pResponse, char * request)
 	static char buffer[1024];
+	char * header;
+	
+	OscCall(getHeader, &header, &request);
+	OscMark_m("Header: %s", header);
+	if (strcmp(header, "SetOptions") == 0) {
+	
+	} else if (false) {
+	
+	}
+	
+	sprintf(buffer, sizeof buffer, "Header: %s", header);
+	
+	*pResponse = buffer;
 OscFunctionEnd()
 
 enum ipcState {
@@ -114,7 +122,10 @@ OscFunction(handleIpcRequests, MainState * pMainState)
 	static int fd;
 	static uint8_t buffer[BUFFER_SIZE];
 	static uint8_t * pNext;
-	size_t remaining;
+	static size_t remaining;
+	
+	usleep(500000);
+	OscMark_m("state: %d", state);
 	
 	if (state == ipcState_uninitialized) {
 		int err;
@@ -153,9 +164,10 @@ OscFunction(handleIpcRequests, MainState * pMainState)
 			state = ipcState_recieving;
 		}
 	} else if (state == ipcState_recieving) {
-		ssize_t numRead = read(fd, buffer + BUFFER_SIZE - remaining, remaining);
+		ssize_t numRead;
 		
 		OscAssert_m(remaining > 0, "No buffer space left.");
+		numRead = read(fd, buffer + BUFFER_SIZE - remaining, remaining);
 		
 		if (numRead > 0) {
 			// We got some data.
@@ -164,19 +176,10 @@ OscFunction(handleIpcRequests, MainState * pMainState)
 		} else if (numRead < 0) {
 			OscAssert_m(errno == EAGAIN, "Error while reading from the IPC connection: %s", strerror(errno));
 		} else {
-			uint8_t outBuffer[BUFFER_SIZE];
-			FILE * inFile = fmemopen(buffer, BUFFER_SIZE - remaining, "r");
-			FILE * outFile = fmemopen(outBuffer, BUFFER_SIZE, "w");
-			
-			OscCall(processRequest, inFile, outFile);
-			remaining = ftell(outFile);
-			
-			OscAssert(fclose(inFile) == 0);
-			OscAssert(fclose(outFile) == 0);
-			
-			memcpy(buffer, outBuffer, BUFFER_SIZE);
+			OscCall(processRequest, pNext, buffer);
 			
 			pNext = buffer;
+			remaining = strlen(pNext);
 			state = ipcState_sending;
 		}
 	} else if (state == ipcState_sending) {

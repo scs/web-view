@@ -51,7 +51,6 @@ static OSC_ERR init(const int argc, const char * argv[])
 		&OscModule_bmp,
 		&OscModule_cam,
 		&OscModule_hsm,
-		&OscModule_ipc,
 		&OscModule_vis,
 		&OscModule_gpio
 	);
@@ -114,14 +113,6 @@ static OSC_ERR init(const int argc, const char * argv[])
 	{
 		OscLog(ERROR, "%s: Unable to set up multi buffer!\n", __func__);
 		goto mb_err;
-	}
-	
-	/* Register an IPC channel to the CGI for the user interface. */
-	err = OscIpcRegisterChannel(&data.ipc.ipcChan, USER_INTERFACE_SOCKET_PATH, F_IPC_SERVER | F_IPC_NONBLOCKING);
-	if (err != SUCCESS)
-	{
-		OscLog(ERROR, "%s: Unable to initialize IPC channel to web interface! (%d)\n", __func__, err);
-		goto ipc_err;
 	}
 	
 	err |= OscCamPerspectiveStr2Enum("DEFAULT", &data.perspective);
