@@ -97,7 +97,7 @@ OscFunction(processRequest, char ** pResponse, char * request)
 	
 	}
 	
-	sprintf(buffer, sizeof buffer, "Header: %s", header);
+//	sprintf(buffer, sizeof buffer, "Header: %s", header);
 	
 	*pResponse = buffer;
 OscFunctionEnd()
@@ -183,21 +183,22 @@ OscFunction(handleIpcRequests, MainState * pMainState)
 			state = ipcState_sending;
 		}
 	} else if (state == ipcState_sending) {
+		OscMark();
 		if (remaining > 0) {
 			ssize_t numWritten;
-			
+			OscMark();
 			numWritten = write(fd, pNext, remaining);
-			
+			OscMark();
 			if (numWritten > 0) {
 				// We've written some data.
-				pNext += numWritten;
+				pNext += numWritten;OscMark();
 				remaining -= numWritten;
 			} else if (numWritten < 0) {
-				OscAssert_m(errno == EAGAIN, "Error while writing to the IPC connection: %s", strerror(errno));
+				OscAssert_m(errno == EAGAIN, "Error while writing to the IPC connection: %s", strerror(errno));OscMark();
 			}
 		} else {
-			close(fd);
-			state = ipcState_listening;
+			close(fd);OscMark();
+			state = ipcState_listening;OscMark();
 		}
 	}
 OscFunctionEnd()
