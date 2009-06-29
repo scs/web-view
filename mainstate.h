@@ -26,14 +26,12 @@
 #include "template.h"
 
 enum events {
-	event_writeImage,
-	event_captureImage,
-	event_activate
-	FRAMEPAR_EVT,       /* frame ready to process (parallel to next capture) */
-	IPC_GET_APP_STATE_EVT, /* Webinterface asks for the current application state. */
-	IPC_GET_COLOR_IMG_EVT, /* Webinterface asks for a color image. */
-	IPC_GET_RAW_IMG_EVT, /* Webinterface asks for a raw image. */
-	IPC_SET_CAPTURE_MODE_EVT /* Webinterface wants to set whether we capture color or raw images. */
+	FRAMEPAR_EVT, // frame ready to process (parallel to next capture)
+	FRAMESEQ_EVT, // frame ready to process (before setting up next frame capture)
+	IPC_GET_APP_STATE_EVT, // Webinterface asks for the current application state.
+	IPC_GET_COLOR_IMG_EVT, // Webinterface asks for a color image.
+	IPC_GET_RAW_IMG_EVT, // Webinterface asks for a raw image.
+	IPC_SET_CAPTURE_MODE_EVT // Webinterface wants to set whether we capture color or raw images.
 };
 
 

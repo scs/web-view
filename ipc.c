@@ -20,11 +20,20 @@
  * @brief Implements the IPC handling of the template application.
  */
 
+#include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <stdio.h>
+
 #include "template.h"
 #include "cgi/cgi.h"
-#include <string.h>
+#include "mainstate.h"
 
-#define MAX_ARGS
+#define BUFFER_SIZE (1024)
 
 struct argument {
 	char * key;
@@ -108,7 +117,7 @@ static char * strtrim(char * str) {
 	return str;
 }
 
-OscFunction(getHeader, char ** pHeader) {
+OscFunction(getHeader, char ** pHeader)
 	static char buffer[1024];
 	
 	OscAssert_e(fgets (buffer, sizeof buffer, stdin) == NULL, -EUNABLE_TO_READ;)
@@ -116,7 +125,7 @@ OscFunction(getHeader, char ** pHeader) {
 	*pHeader = strtrim(buffer);
 OscFunctionEnd()
 
-OscFunction(getArgument, char ** pKey, char ** pValue) {
+OscFunction(getArgument, char ** pKey, char ** pValue)
 	static char buffer[1024];
 	char * colon;
 	
@@ -153,58 +162,89 @@ OscFunction(handleIpcRequests, MainState * pMainState)
 	static enum ipcState state = ipcState_uninitialized;
 	static int socketFd;
 	static int fd;
-	static uint8_t buffer[1024];
-	static * uint8_t pNext;
-	uint8_t * const pEnd = buffer + length(buffer);
+	static uint8_t buffer[BUFFER_SIZE];
+	static uint8_t * pNext;
+	size_t remaining;
 	
-	if (ipcState == ipcState_uninitialized) {
+	if (state == ipcState_uninitialized) {
 		int err;
 		struct sockaddr_un addr = { .sun_family = AF_UNIX };
 		
-		OscAssert_m(strlen(CGI_SOCKET_PATH) >= sizeof (addr.sun_path), "Path too long.")
-		strcpy(addr.sun_path, pName);
+		OscAssert_m(strlen(CGI_SOCKET_PATH) < sizeof (addr.sun_path), "Path too long.")
+		strcpy(addr.sun_path, CGI_SOCKET_PATH);
+		unlink(addr.sun_path);
 		
 		socketFd = socket(AF_UNIX, SOCK_STREAM, 0);
 		OscAssert_m(socketFd >= 0, "Cannot open a socket.");
 		
 		err = fcntl(socketFd, F_SETFL, O_NONBLOCK);
-		OscAssert_m(err >= 0, "Cannot set O_NONBLOCK.");
+		OscAssert_m(err == 0, "Error setting O_NONBLOCK: %s", strerror(errno));
 		
 		err = bind(socketFd, (struct sockaddr *) &addr, SUN_LEN(&addr));
-		OscAssert_m(err >= 0, "Cannot bind to the socket.");
+		OscAssert_m(err == 0, "Error binding the socket: %s", strerror(errno));
 		
-		err = listen(socketFd, 1);
-		OscAssert_m(err >= 0, "Cannot listen on the socket.");
+		err = listen(socketFd, 5);
+		OscAssert_m(err == 0, "Error listening on the socket: %s", strerror(errno));
 		
 		state = ipcState_listening;
-	} else if (ipcState == ipcState_listening) {
+	} else if (state == ipcState_listening) {
 		{
 			unsigned int remoteAddrLen;
 			struct sockaddr remoteAddr;
 			
-			fd = accept(sock, &remoteAddr, &remoteAddrLen);
+			fd = accept(socketFd, &remoteAddr, &remoteAddrLen);
 		}
 		
 		if (fd < 0) {
-			OscAssert_m(errno != EAGAIN, "Error accepting a connection: %s", strerror(errno));
+			OscAssert_m(errno == EAGAIN, "Error accepting a connection: %s", strerror(errno));
 		} else {
 			pNext = buffer;
+			remaining = BUFFER_SIZE;
 			state = ipcState_recieving;
 		}
-	} else if (ipcState == ipcState_recieving) {
-		ssize_t numRead;
+	} else if (state == ipcState_recieving) {
+		ssize_t numRead = read(fd, buffer + BUFFER_SIZE - remaining, remaining);
 		
-		errno = 0;
-		numRead = read(fd, pNext, pEnd - pNext);
+		OscAssert_m(remaining > 0, "No buffer space left.");
 		
 		if (numRead > 0) {
+			// We got some data.
 			pNext += numRead;
-		} else if (numRead == 0) {
-			OscAssert_m(errno == 0, "Error while reading from socket: %s", strerror(errno));
-			OscCall(processRequest(buffer));
+			remaining -= numRead;
+		} else if (numRead < 0) {
+			OscAssert_m(errno == EAGAIN, "Error while reading from the IPC connection: %s", strerror(errno));
+		} else {
+			uint8_t outBuffer[BUFFER_SIZE];
+			FILE * inFile = fmemopen(buffer, BUFFER_SIZE - remaining, "r");
+			FILE * outFile = fmemopen(outBuffer, BUFFER_SIZE, "w");
+			
+			OscCall(processRequest, inFile, outFile);
+			remaining = ftell(outFile);
+			
+			OscAssert(fclose(inFile) == 0);
+			OscAssert(fclose(outFile) == 0);
+			
+			memcpy(buffer, outBuffer, BUFFER_SIZE);
+			
+			pNext = buffer;
 			state = ipcState_sending;
 		}
-	} else if (ipcState == ipcState_sending) {
-		
+	} else if (state == ipcState_sending) {
+		if (remaining > 0) {
+			ssize_t numWritten;
+			
+			numWritten = write(fd, pNext, remaining);
+			
+			if (numWritten > 0) {
+				// We've written some data.
+				pNext += numWritten;
+				remaining -= numWritten;
+			} else if (numWritten < 0) {
+				OscAssert_m(errno == EAGAIN, "Error while writing to the IPC connection: %s", strerror(errno));
+			}
+		} else {
+			close(fd);
+			state = ipcState_listening;
+		}
 	}
 OscFunctionEnd()

@@ -25,6 +25,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "oscar.h"
 #include "cgi.h"
 
 OscFunction(processRequest)

@@ -155,38 +155,6 @@ OSC_ERR Unload()
 	return SUCCESS;
 }
 
-OscFunction(true_f)
-OscFunctionCatch()
-OscFunctionEnd()
-
-OscFunction(false_f)
-	OscFail_s();
-OscFunctionCatch()
-OscFunctionEnd()
-
-OscFunction(test)
-	OscMark();
-	OscCall(true_f);
-	OscMark();
-	OscCall(false_f);
-	OscMark();
-	
-OscFunctionCatch()
-	OscMark_m("Bääääh!");
-	OscRecover();
-	
-OscFunctionEnd()
-
-OscFunction(stuff)
-	OscCall(test);
-	OscFail_m("Failing anyway ...")
-	
-OscFunctionCatch()
-	OscMark_m("Uääääh!");
-	OscFail_m("Even failing fails ...");
-	
-OscFunctionEnd()
-
 /*********************************************************************//*!
  * @brief Program entry
  * 

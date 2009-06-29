@@ -28,7 +28,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-const Msg mainStateMsg[] = {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+const Msg mainStateMsg[] = {
+	{ FRAMEPAR_EVT },
+	{ FRAMESEQ_EVT },
 	{ IPC_GET_APP_STATE_EVT },
 	{ IPC_GET_COLOR_IMG_EVT },
 	{ IPC_GET_RAW_IMG_EVT },
@@ -209,14 +211,10 @@ OSC_ERR StateControl( void)
 	}
 	
 	/*----------- infinite main loop */
-	while (TRUE)
-	{
+	loop {
 		/*----------- wait for captured picture */
-		while (TRUE)
-		{
-			OscMark();
-			
-			err = HandleIpcRequests(&mainState);
+		loop {
+			err = handleIpcRequests(&mainState);
 			if (err != SUCCESS)
 			{
 				OscLog(ERROR, "%s: IPC error! (%d)\n", __func__, err);
@@ -242,7 +240,7 @@ OSC_ERR StateControl( void)
 				 * engine with event */
 				
 				/* Read request. */
-				err = HandleIpcRequests(&mainState);
+				err = handleIpcRequests(&mainState);
 				if (err != SUCCESS)
 				{
 					OscLog(ERROR, "%s: IPC error! (%d)\n", __func__, err);
