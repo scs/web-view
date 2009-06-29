@@ -45,63 +45,6 @@ struct command {
 	struct argument args[];
 };
 
-static OSC_ERR CheckIpcRequests(uint32 * pParamId)
-{
-	OSC_ERR err;
-	struct IPC_DATA *pIpc = &data.ipc;
-	struct OSC_IPC_REQUEST *pReq = &pIpc->req;
-	
-	if (pIpc->enReqState != REQ_STATE_IDLE) {
-		// This means we still have an unacknowledged request from last time. Proceed with the acknowledgement instead of already getting new ones.
-		err = ENO_MSG_AVAIL;
-	}
-	
-	/* Get the next request. */
-	err = OscIpcGetRequest(pIpc->ipcChan, pReq);
-	if (err == SUCCESS) {
-		/* We have a request. */
-		
-		/* In case of success simply return the parameter ID of the requested parameter. */
-		*pParamId = pReq->paramID;
-	} else {
-		/* Getting request not successful => analyze why. */
-		if (likely(err == -ENO_MSG_AVAIL))
-			err = ENO_MSG_AVAIL;
-		else
-			OscLog(ERROR, "%s: Error getting IPC request! (%d)\n", __func__, err);
-	}
-	
-	return err;
-}
-
-static OSC_ERR AckIpcRequests()
-{
-	struct IPC_DATA *pIpc = &data.ipc;
-	struct OSC_IPC_REQUEST *pReq = &pIpc->req;
-	OSC_ERR err;
-	bool bSuccess;
-	
-	if (pIpc->enReqState == REQ_STATE_IDLE) {
-		/* Nothing to acknowledge. */
-		return SUCCESS;
-	} else if (pIpc->enReqState == REQ_STATE_NACK_PENDING) {
-		bSuccess = FALSE; }
-	else {
-		bSuccess = TRUE;
-	}
-	
-	err = OscIpcAckRequest(pIpc->ipcChan, pReq, bSuccess);
-	if (err == SUCCESS) {
-		/* Ack sent successfully. Now we're ready for the next request.*/
-		pIpc->enReqState = REQ_STATE_IDLE;
-	} else if (err == -ETRY_AGAIN) {
-		/* Not really an error, just means we have to try again later, which will happen soon enough. */
-		err = SUCCESS;
-	}
-	
-	return err;
-}
-
 /*! @brief Strips whiltespace from the beginning and the end of a string and returns the new beginning of the string. Be advised, that the original string gets mangled! */
 static char * strtrim(char * str) {
 	char * end = strchr(str, 0) - 1;
@@ -117,19 +60,26 @@ static char * strtrim(char * str) {
 	return str;
 }
 
-OscFunction(getHeader, char ** pHeader)
-	static char buffer[1024];
+OscFunction(getHeader, char ** pHeader, char ** pBuffer)
+	char * newline = strchr(*pBuffer, '\n');
+	OscAssert_m(newline != NULL, "No newline found.");
 	
-	OscAssert_e(fgets (buffer, sizeof buffer, stdin) == NULL, -EUNABLE_TO_READ;)
-	
-	*pHeader = strtrim(buffer);
+	*newline = 0;
+	*pHeader = strtrim(*pBuffer);
+	*pBuffer = newline + 1;
 OscFunctionEnd()
 
-OscFunction(getArgument, char ** pKey, char ** pValue)
-	static char buffer[1024];
-	char * colon;
+OscFunction(getArgument, char ** pKey, char ** pValue, char ** pBuffer)
+	char * newline, * colon;
 	
-	OscAssert_e(fgets (buffer, sizeof buffer, stdin) == NULL, -EUNABLE_TO_READ;)
+	newline = strchr(*pBuffer, '\n');
+	*newline = 0;
+	colon = strchr(*pBuffer, 0);
+	*colon = 0;
+	
+	
+	///////////////
+	OscAssert_e(fgets(buffer, sizeof buffer, file) == NULL, -EUNABLE_TO_READ)
 	
 	colon = strchr(buffer, ':');
 	
@@ -141,7 +91,7 @@ OscFunction(getArgument, char ** pKey, char ** pValue)
 OscFunctionEnd()
 
 OscFunction(processRequest, FILE * request, FILE * response)
-	
+	static char buffer[1024];
 OscFunctionEnd()
 
 enum ipcState {

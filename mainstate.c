@@ -221,19 +221,16 @@ OSC_ERR StateControl( void)
 				Unload();
 				return err;
 			}
-			OscMark();
 			
 			camErr = OscCamReadPicture(OSC_CAM_MULTI_BUFFER, &pCurRawImg, 0, CAMERA_TIMEOUT);
 			if (camErr != -ETIMEOUT)
 			{
-				OscMark();
 				/* Anything other than a timeout means that we should
 				 * stop trying and analyze the situation. */
 				break;
 			}
 			else
 			{
-				OscMark();
 				/*----------- procress CGI request
 				 * Check for CGI request only if ReadPicture generated a
 				 * time out. Process request directely or involve state
@@ -249,7 +246,7 @@ OSC_ERR StateControl( void)
 				}
 			}
 		}
-		OscMark();
+		
 		if (camErr == -EPICTURE_TOO_OLD)
 		{
 			/* We have a picture, but it already has been laying
@@ -280,12 +277,11 @@ OSC_ERR StateControl( void)
 			OscLog(ERROR, "%s: Unable to read picture from cam!\n", __func__);
 			break;
 		}
-		OscMark();
+		
 		data.pCurRawImg = pCurRawImg;
 		
 		/*----------- process frame by state engine (pre-setup) Sequentially with next capture */
 		ThrowEvent(&mainState, FRAMESEQ_EVT);
-		OscMark();
 		
 		/*----------- prepare next capture */
 		camErr = OscCamSetupCapture(OSC_CAM_MULTI_BUFFER);
@@ -300,13 +296,12 @@ OSC_ERR StateControl( void)
 			OscLog(ERROR, "%s: Unable to trigger capture (%d)!\n", __func__, err);
 			break;
 		}
-		OscMark();
+		
 		/*----------- process frame by state engine (post-setup) Parallel with next capture */
 		ThrowEvent(&mainState, FRAMEPAR_EVT);
 		
 		/* Advance the simulation step counter. */
 		OscSimStep();
-		OscMark();
 	} /* end while ever */
 	
 	return SUCCESS;
