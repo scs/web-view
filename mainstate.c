@@ -41,7 +41,7 @@ Msg const * mainState_top(Hsm * hsm, Msg const * msg) {
 		return NULL;
 	} else if (msg->evt == MainStateEvent_ipcSetOptions) {
 		OscMark_m("%d", mainState->options.exposureTime);
-		OscCamSetShutterWidth(mainState->options.exposureTime);
+		OscCamSetShutterWidth(mainState->options.exposureTime * 1000);
 		
 		return NULL;
 	}
@@ -59,8 +59,6 @@ Msg const * mainState_cameraGray(Hsm * hsm, Msg const * msg) {
 		mainState->imageInfo.colorType = ColorType_gray;
 		
 		return NULL;
-	} else if (msg->evt == MainStateEvent_ipcSetOptions) {
-		OscCamSetShutterWidth(mainState->options.exposureTime);
 	}
 	
 	return msg;

@@ -83,7 +83,7 @@ deploy: $(APP_NAME).app
 	tar c $< | ssh root@$(CONFIG_TARGET_IP) 'rm -rf $< && tar x -C $(DEPLOY_DIR)' || true
 
 run:
-	ssh root@$(CONFIG_TARGET_IP) /$(DEPLOY_DIR)/$(APP_NAME).app/run.sh || true
+	ssh root@$(CONFIG_TARGET_IP) $(DEPLOY_DIR)$(APP_NAME).app/run.sh || true
 
 install: cgi/cgi_host
 	cp -RL cgi/www/* /var/www

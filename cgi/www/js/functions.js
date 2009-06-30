@@ -105,7 +105,8 @@ function buildControls() {
 		var label = createElement("span", { }, $(this).contents());
 		var elem = createElement("div", {
 			"class" : $(this).attr("class"),
-			"type" : $(this).attr("type")
+			"type" : $(this).attr("type"),
+			"name" : $(this).attr("name")
 		});
 		
 		label.addClass("label-before");
@@ -133,6 +134,8 @@ function buildControls() {
 					x = x * (b - a) + a;
 				
 				value.text(x.toPrecision2(2));
+				
+				inputValues[$(this).attr("name")] = x;
 			}
 		});
 	});
@@ -211,15 +214,18 @@ function parseValues(data) {
 	return obj;
 }
 
-function exchangeState(data, onLoad, onError) {
+var inputValues = { };
+
+function exchangeState(header, data, onLoad, onError) {
 	$.ajax({
 		async: true,
 		cache: false,
 		contentType: "text/plain",
-		data: serializeValues(data),
+		data: header + "\n" + serializeValues(data),
 		error: onError,
 		success: function (data) {
-			onLoad(parseValues(data));
+			if (onLoad)
+				onLoad(parseValues(data));
 		},
 		timeout: 2000,
 		type: "POST",
@@ -232,7 +238,7 @@ function asynLoadImage(url, onLoad, onError) {
 	
 	img.load(onLoad);
 	img.error(onError);
-	img.attr("src", url /*+ "?dummy=" + (new Date()).getTime()*/);
+	img.attr("src", url + "?dummy=" + (new Date()).getTime());
 }
 
 var offBanner = {
@@ -299,14 +305,14 @@ function updateCycle() {
 		stateControl.pullState("offline");
 		
 		$(document).oneTime("0.5s", function () {
-			exchangeState({ }, online, offline);
+			exchangeState("GetImage", { }, online, offline);
 		});
 	}
 	
 	function online() {
 		stateControl.pullState("online");
 		
-		exchangeState(getInputValues($("#options-box")), function (data) {
+		exchangeState("GetImage", { }, function (data) {
 			asynLoadImage("image.bmp?" + data.imgTS, function () {
 				$(this).attr("id", "image");
 				$("#image").replaceWith(this);
@@ -317,6 +323,12 @@ function updateCycle() {
 			//	console.log(event);
 				offline();
 			});
+			
+			if (data.exposureTime != inputValues.exposureTime) {
+				exchangeState("SetOptions", {
+					exposureTime: inputValues.exposureTime
+				});
+			}
 		}, function (request, status) {
 		//	console.log(status);
 			offline();

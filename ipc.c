@@ -207,8 +207,6 @@ OscFunction(handleIpcRequests, struct MainState * mainState)
 	static char * pNext;
 	static size_t remaining;
 	
-	OscMark_m("state: %d", state);
-	
 	if (state == ipcState_uninitialized) {
 		int err;
 		struct sockaddr_un addr = { .sun_family = AF_UNIX };
@@ -252,9 +250,7 @@ OscFunction(handleIpcRequests, struct MainState * mainState)
 		ssize_t numRead;
 		
 		OscAssert_m(remaining > 0, "No buffer space left.");
-		OscMark_m("read(%d, %p, %d)", fd, buffer + BUFFER_SIZE - remaining, remaining);
 		numRead = read(fd, buffer + BUFFER_SIZE - remaining, remaining);
-		OscMark_m("numRead: %d", numRead);
 		
 		if (numRead > 0) {
 			// We got some data.
@@ -265,7 +261,6 @@ OscFunction(handleIpcRequests, struct MainState * mainState)
 		} else {
 			*pNext = 0;
 			OscCall(processRequest, &pNext, buffer, mainState);
-			OscMark_m("%s", pNext);
 			remaining = strlen(pNext);
 			state = ipcState_sending;
 		}
@@ -277,14 +272,14 @@ OscFunction(handleIpcRequests, struct MainState * mainState)
 			
 			if (numWritten > 0) {
 				// We've written some data.
-				pNext += numWritten;OscMark();
+				pNext += numWritten;
 				remaining -= numWritten;
 			} else if (numWritten < 0) {
-				OscAssert_m(errno == EAGAIN, "Error while writing to the IPC connection: %s", strerror(errno));OscMark();
+				OscAssert_m(errno == EAGAIN, "Error while writing to the IPC connection: %s", strerror(errno));
 			}
 		} else {
-			close(fd);OscMark();
-			state = ipcState_listening;OscMark();
+			close(fd);
+			state = ipcState_listening;
 		}
 	}
 OscFunctionEnd()
