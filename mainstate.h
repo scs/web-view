@@ -23,26 +23,41 @@
 #ifndef MAINSTATE_H
 #define MAINSTATE_H
 
-#include "template.h"
+#include "oscar.h"
 
-enum events {
-	FRAMEPAR_EVT, // frame ready to process (parallel to next capture)
-	FRAMESEQ_EVT, // frame ready to process (before setting up next frame capture)
-	IPC_GET_APP_STATE_EVT, // Webinterface asks for the current application state.
-	IPC_GET_COLOR_IMG_EVT, // Webinterface asks for a color image.
-	IPC_GET_RAW_IMG_EVT, // Webinterface asks for a raw image.
-	IPC_SET_CAPTURE_MODE_EVT // Webinterface wants to set whether we capture color or raw images.
+enum ImageType {
+	ImageType_none, // No valid image yet
+	ImageType_gray, // Image from a grayscale sensor
+	ImageType_raw, // Raw image from a color sensor
+	ImageType_debayered // Debayered image from a color sensor
 };
 
+struct IpcImageInfo {
+	uint8_t data[3 * OSC_CAM_MAX_IMAGE_WIDTH * OSC_CAM_MAX_IMAGE_HEIGHT];
+	int width, height;
+	enum ImageType type;
+};
 
-/*typedef struct MainState MainState;*/
-typedef struct MainState {
+enum MainStateEvent {
+	MainStateEvent_CamNewImage,
+	MainStateEvent_IpcSetRawCapture,
+	MainStateEvent_IpcSetColorCapture
+};
+
+struct MainState {
 	Hsm super;
-	State captureRaw, captureColor;
-} MainState;
+	State cameraGray, cameraColor, cameraColor_captureRaw, cameraColor_captureDebayered;
+	uint8_t * pCurrentImage;
+	struct IpcImageInfo imageInfo;
+};
 
-
-void MainStateConstruct(MainState *me);
-
+/*********************************************************************//*!
+ * @brief Give control to statemachine.
+ * 
+ * @return SUCCESS or an appropriate error code otherwise
+ * 
+ * The function does never return normally except in error case.
+ *//*********************************************************************/
+OscFunctionDeclare(stateControl);
 
 #endif /*MAINSTATE_H*/

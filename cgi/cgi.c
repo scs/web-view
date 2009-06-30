@@ -31,61 +31,65 @@
 
 #include "oscar.h"
 #include "cgi.h"
+#include "errno.h"
+#include "string.h"
+
+OscFunction(copyAll, int outFd, int inFd)
+	loop {
+		char buffer[1024];
+		char * pNext = buffer;
+		size_t num, remaining = sizeof buffer;
+		
+		do {
+			num = read(inFd, pNext, remaining);
+			
+			pNext += num;
+			remaining -= num;
+		} until (remaining == 0 || num == 0);
+		
+		pNext = buffer;
+		remaining = (sizeof buffer) - remaining;
+		
+		if (remaining == 0)
+			break;
+		
+		do {
+			num = write(outFd, buffer, remaining);
+			
+			pNext += num;
+			remaining -= num;
+		} until (remaining == 0 || num == 0);
+	};
+OscFunctionEnd()
 
 OscFunction(processRequest)
-/*	OSC_IPC_CHAN_ID ipcChannel;
-	struct cgiBuffer buffer;
+	int fd, err;
 	
-	OscCall(OscIpcRegisterChannel, &ipcChannel, CGI_SOCKET_PATH, 0);
+	printf("Status: 200 OK\n");
+	printf("Content-Type: text/plain\n");
+	printf("\n");
 	
-	cgiBuffer.length = fread(&buffer.data, 1, sizeof buffer.data, stdin);
-	OscAssert(ferror(stdin) == 0);
-	
-	OscIpcSetParam(ipcChannel, &buffer, ipcParamIds_putRequest, sizeof buffer);
-	OscIpcGetParam(ipcChannel, &buffer, ipcParamIds_getResponse, sizeof buffer);
-	
-	fwrite(&buffer.data, 1, sizeof buffer.data, stdin);
-	OscAssert(ferror(stdin) == 0);
-*/
-	
-	int sock, err;
-	struct sockaddr_un servaddr;/* address of server */
-	char * data = "Foo!\n";
-	
-	/*      Set up address structure for server socket */
-	servaddr = (struct sockaddr_un) { };
-	servaddr.sun_family = AF_UNIX;
-	strcpy(servaddr.sun_path, CGI_SOCKET_PATH);
-	
-	/* Create a UNIX datagram socket for client */
-	sock = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (sock < 0) {
-		perror("client: socket");
-		return 2;
-	}
-	
-	err = connect(sock, (struct sockaddr *) &servaddr, SUN_LEN(&servaddr));
-	if (err < 0) {
-		close(sock);
-		perror("client: connect");
-		return 3;
-	}
-	
-	write(sock, data, strlen(data));
-	
-	shutdown(sock, 1);
+	fd = socket(AF_UNIX, SOCK_STREAM, 0);
+	OscAssert_m(fd >= 0, "Error creating the socket: %s", strerror(errno));
 	
 	{
-		char buffer[1024];
-		int nRead = read(sock, buffer, sizeof buffer);
+		struct sockaddr_un servaddr = { .sun_family = AF_UNIX };
 		
-		buffer[nRead] = 0;
+		strncpy(servaddr.sun_path, CGI_SOCKET_PATH, sizeof servaddr.sun_path);
 		
-		printf("%s\n", buffer);
+		err = connect(fd, (struct sockaddr *) &servaddr, SUN_LEN(&servaddr));
+		OscAssert_m(err == 0, "Error connecting to the server: %s", strerror(errno));
 	}
 	
-	close(sock);
-	printf("Client done\n");
+	OscCall(copyAll, fd, 0);
+	
+	err = shutdown(fd, 1);
+	OscAssert_m(err == 0, "Error closing the writing part of the connection: %s", strerror(errno));
+	
+	OscCall(copyAll, 1, fd);
+	
+	err = close(fd);
+	OscAssert_m(err == 0, "Error closing the writing part of the connection: %s", strerror(errno));
 OscFunctionEnd()
 
 OscFunction(mainFunction)

@@ -20,21 +20,22 @@
  * @brief Main State machine for template application.
  * 
  * Makes use of Framework HSM module.
-	************************************************************************/
+ */
 
-#include "template.h"
-#include "mainstate.h"
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "oscar.h"
+#include "mainstate.h"
+#include "ipc.h"
+
+#define CGI_IMAGE_PATH
+
 const Msg mainStateMsg[] = {
-	{ FRAMEPAR_EVT },
-	{ FRAMESEQ_EVT },
-	{ IPC_GET_APP_STATE_EVT },
-	{ IPC_GET_COLOR_IMG_EVT },
-	{ IPC_GET_RAW_IMG_EVT },
-	{ IPC_SET_CAPTURE_MODE_EVT }
+	{ MainStateEvent_CamNewImage },
+	{ MainStateEvent_IpcSetRawCapture },
+	{ MainStateEvent_IpcSetColorCapture }
 };
 
 /*********************************************************************//*!
@@ -43,14 +44,17 @@ const Msg mainStateMsg[] = {
  * @param pHsm Pointer to state machine
  * @param evt Event to be thrown.
  *//*********************************************************************/
-void ThrowEvent(struct MainState *pHsm, unsigned int evt)
-{
-	const Msg *pMsg = &mainStateMsg[evt];
-	HsmOnEvent((Hsm*)pHsm, pMsg);
-}
+#define ThrowEvent(mainState, event) \
+	HsmOnEvent(&(mainState)->super, &mainStateMsg[event])
 
-Msg const *MainState_top(MainState *me, Msg *msg)
-{
+Msg const * mainState_top(Hsm * hsm, Msg const * msg) {
+	struct MainState * mainState = containerOf(hsm, struct MainState, super);
+	
+	if (msg->evt == START_EVT) {
+		STATE_START(mainState, &mainState->cameraGray);
+		return NULL;
+	}
+/*	if (msg == mainStateMsg[])
 	switch (msg->evt)
 	{
 	case START_EVT:
@@ -60,14 +64,50 @@ Msg const *MainState_top(MainState *me, Msg *msg)
 	case IPC_GET_RAW_IMG_EVT:
 	case IPC_GET_APP_STATE_EVT:
 	case IPC_SET_CAPTURE_MODE_EVT:
-		/* If the IPC event is not handled in the actual substate, a negative acknowledge is returned by default. */
+		// If the IPC event is not handled in the actual substate, a negative acknowledge is returned by default.
 		data.ipc.enReqState = REQ_STATE_NACK_PENDING;
 	return 0;
 	}
 	return msg;
+*/
+	return msg;
 }
 
-Msg const *MainState_CaptureColor(MainState *me, Msg *msg)
+Msg const * mainState_cameraGray(Hsm * hsm, Msg const * msg) {
+	struct MainState * mainState = containerOf(hsm, struct MainState, super);
+	
+	if (msg->evt == MainStateEvent_CamNewImage) {
+		mainState->imageInfo.width = OSC_CAM_MAX_IMAGE_WIDTH;
+		mainState->imageInfo.height = OSC_CAM_MAX_IMAGE_HEIGHT;
+		memcpy(mainState->imageInfo.data, mainState->pCurrentImage, mainState->imageInfo.width * mainState->imageInfo.height);
+		mainState->imageInfo.type = ImageType_gray;
+		
+		return 0;
+	}
+	
+	return msg;
+}
+
+Msg const * mainState_cameraColor(Hsm * hsm, Msg const * msg) {
+//	struct MainState * mainState = containerOf(hsm, struct MainState, super);
+	
+	return msg;
+}
+
+Msg const * mainState_cameraColor_captureRaw(Hsm * hsm, Msg const * msg) {
+//	struct MainState * mainState = containerOf(hsm, struct MainState, super);
+	
+	return msg;
+}
+
+Msg const * mainState_cameraColor_captureDebayered(Hsm * hsm, Msg const * msg) {
+//	struct MainState * mainState = containerOf(hsm, struct MainState, super);
+	
+	return msg;
+}
+
+#if 0
+Msg const * mainState_CaptureColor(struct MainState * me, Msg const * msg)
 {
 	struct APPLICATION_STATE *pState;
 	bool bCaptureColor;
@@ -123,7 +163,7 @@ Msg const *MainState_CaptureColor(MainState *me, Msg *msg)
 	return msg;
 }
 
-Msg const *MainState_CaptureRaw(MainState *me, Msg *msg)
+Msg const * mainState_CaptureRaw(struct MainState * me, Msg const * msg)
 {
 	struct APPLICATION_STATE *pState;
 	bool bCaptureColor;
@@ -177,132 +217,51 @@ Msg const *MainState_CaptureRaw(MainState *me, Msg *msg)
 	}
 	return msg;
 }
+#endif
 
-void MainStateConstruct(MainState *me)
-{
-	HsmCtor((Hsm *)me, "MainState", (EvtHndlr)MainState_top);
-	StateCtor(&me->captureRaw, "Capture Raw", &((Hsm *)me)->top, (EvtHndlr)MainState_CaptureRaw);
-	StateCtor(&me->captureColor, "Capture Color", &((Hsm *)me)->top, (EvtHndlr)MainState_CaptureColor);
-}
+OscFunction(static mainStateInit, struct MainState * me)
+	HsmCtor(&me->super, "mainState", mainState_top);
+	StateCtor(&me->cameraGray, "cameraGray", &me->super.top, mainState_cameraGray);
+	StateCtor(&me->cameraColor, "cameraColor", &me->super.top, mainState_cameraColor);
+	StateCtor(&me->cameraColor_captureRaw, "cameraColor_captureRaw", &me->super.top, mainState_cameraColor_captureRaw);
+	StateCtor(&me->cameraColor_captureDebayered, "cameraColor_captureDebayered", &me->super.top, mainState_cameraColor_captureDebayered);
+	
+	HsmOnStart(&me->super);
+OscFunctionEnd()
 
-OSC_ERR StateControl( void)
-{
-	OSC_ERR camErr, err;
-	MainState mainState;
-	uint8 *pCurRawImg = NULL;
+OscFunction(stateControl)
+	struct MainState mainState = { };
 	
 	/* Setup main state machine */
-	MainStateConstruct(&mainState);
-	HsmOnStart((Hsm *)&mainState);
-	
-	OscSimInitialize();
-	
-	/*----------- initial capture preparation*/
-	camErr = OscCamSetupCapture( OSC_CAM_MULTI_BUFFER);
-	if (camErr != SUCCESS)
-	{
-		OscLog(ERROR, "%s: Unable to setup initial capture (%d)!\n", __func__, camErr);
-		return camErr;
-	}
-	err = OscGpioTriggerImage();
-	if (err != SUCCESS)
-	{
-	OscLog(ERROR, "%s: Unable to trigger initial capture (%d)!\n", __func__, err);
-	}
-	
+	OscCall(mainStateInit, &mainState);
+	OscCall(OscSimInitialize);
+		
 	/*----------- infinite main loop */
 	loop {
+		// prepare next capture
+		OscCall(OscCamSetupCapture, OSC_CAM_MULTI_BUFFER);
+		OscCall(OscGpioTriggerImage);
+		
 		/*----------- wait for captured picture */
 		loop {
-			err = handleIpcRequests(&mainState);
-			if (err != SUCCESS)
-			{
-				OscLog(ERROR, "%s: IPC error! (%d)\n", __func__, err);
-				Unload();
-				return err;
-			}
+			OscCall(handleIpcRequests, &mainState);
+			usleep(500000);
 			
-			camErr = OscCamReadPicture(OSC_CAM_MULTI_BUFFER, &pCurRawImg, 0, CAMERA_TIMEOUT);
-			if (camErr != -ETIMEOUT)
-			{
-				/* Anything other than a timeout means that we should
-				 * stop trying and analyze the situation. */
-				break;
-			}
-			else
-			{
-				/*----------- procress CGI request
-				 * Check for CGI request only if ReadPicture generated a
-				 * time out. Process request directely or involve state
-				 * engine with event */
-				
-				/* Read request. */
-				err = handleIpcRequests(&mainState);
-				if (err != SUCCESS)
-				{
-					OscLog(ERROR, "%s: IPC error! (%d)\n", __func__, err);
-					Unload();
-					return err;
-				}
-			}
-		}
-		
-		if (camErr == -EPICTURE_TOO_OLD)
-		{
-			/* We have a picture, but it already has been laying
-			 * around for a while. Most likely we won't be able to
-			 * make the deadline for this picture, so we better just
-			 * give it up and don't portrude our delay to the next
-			 * frame. */
-			OscLog(WARN, "%s: Captured picture too old!\n", __func__);
+			OscCall(OscCamReadPicture, OSC_CAM_MULTI_BUFFER, &mainState.pCurrentImage, 0, 1);
 			
-			/*----------- prepare next capture */
-			camErr = OscCamSetupCapture( OSC_CAM_MULTI_BUFFER);
-			if (camErr != SUCCESS)
-			{
-				OscLog(ERROR, "%s: Unable to setup capture (%d)!\n", __func__, camErr);
+			if (OscLastStatus() == SUCCESS)
 				break;
-			}
-			err = OscGpioTriggerImage();
-			if (err != SUCCESS)
-			{
-				OscLog(ERROR, "%s: Unable to trigger capture (%d)!\n", __func__, err);
-				break;
-			}
-			continue;
+			
+			/*----------- procress CGI request
+			 * Check for CGI request only if ReadPicture generated a
+			 * time out. Process request directely or involve state
+			 * engine with event */
 		}
-		else if (camErr != SUCCESS)
-		{
-			/* Fatal error, giving up. */
-			OscLog(ERROR, "%s: Unable to read picture from cam!\n", __func__);
-			break;
-		}
-		
-		data.pCurRawImg = pCurRawImg;
-		
-		/*----------- process frame by state engine (pre-setup) Sequentially with next capture */
-		ThrowEvent(&mainState, FRAMESEQ_EVT);
-		
-		/*----------- prepare next capture */
-		camErr = OscCamSetupCapture(OSC_CAM_MULTI_BUFFER);
-		if (camErr != SUCCESS)
-		{
-			OscLog(ERROR, "%s: Unable to setup capture (%d)!\n", __func__, camErr);
-			break;
-		}
-		err = OscGpioTriggerImage();
-		if (err != SUCCESS)
-		{
-			OscLog(ERROR, "%s: Unable to trigger capture (%d)!\n", __func__, err);
-			break;
-		}
-		
-		/*----------- process frame by state engine (post-setup) Parallel with next capture */
-		ThrowEvent(&mainState, FRAMEPAR_EVT);
+
+		// process frame by state engine (post-setup) Parallel with next capture
+		ThrowEvent(&mainState, MainStateEvent_CamNewImage);
 		
 		/* Advance the simulation step counter. */
 		OscSimStep();
-	} /* end while ever */
-	
-	return SUCCESS;
-}
+	}
+OscFunctionEnd()

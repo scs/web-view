@@ -21,15 +21,15 @@
  * code.
  */
 
-#include "template.h"
 #include <string.h>
 #include <sched.h>
 #include <errno.h>
 #include <unistd.h>
 #include <stdlib.h>
 
-/*! @brief This stores all variables needed by the algorithm. */
-struct TEMPLATE data;
+#include "mainstate.h"
+
+#define TEST_IMAGE_FN "test.bmp"
 
 /*********************************************************************//*!
  * @brief Initialize everything so the application is fully operable
@@ -37,114 +37,42 @@ struct TEMPLATE data;
  * 
  * @return SUCCESS or an appropriate error code.
  *//*********************************************************************/
-static OSC_ERR init(const int argc, const char * argv[])
-{
-	OSC_ERR err = SUCCESS;
+OscFunction(static mainFunction)
 	uint8 multiBufferIds[2] = {0, 1};
-	
-	memset(&data, 0, sizeof(struct TEMPLATE));
+	uint8_t frameBuffers[2][OSC_CAM_MAX_IMAGE_HEIGHT * OSC_CAM_MAX_IMAGE_WIDTH];
 	
 	/******* Create the framework **********/
-	err = OscCreate(
-		&OscModule_log,
-		&OscModule_sup,
-		&OscModule_bmp,
-		&OscModule_cam,
-		&OscModule_hsm,
-		&OscModule_vis,
-		&OscModule_gpio
-	);
-	if (err < 0)
-	{
-		fprintf(stderr, "%s: Unable to create framework.\n", __func__);
-		return err;
-	}
-		
-	if (err != SUCCESS)
-	{
-		fprintf(stderr, "%s: ERROR: Unable to load dependencies! (%d)\n", __func__, err);
-		goto dep_err;
-	}
+	OscCall(OscCreate, &OscModule_log, &OscModule_sup, &OscModule_bmp, &OscModule_cam, &OscModule_hsm, &OscModule_vis, &OscModule_gpio);
 	
-	/********* Seed the random generator *************/
-	srand(OscSupCycGet());
-	
+	OscCall(OscLogSetConsoleLogLevel, INFO);
+	OscCall(OscLogSetFileLogLevel, WARN);
+
 #if defined(OSC_HOST) || defined(OSC_SIM)
-	err = OscFrdCreateConstantReader(&data.hFileNameReader, TEST_IMAGE_FN);
-	if (err != SUCCESS)
 	{
-		OscLog(ERROR, "%s: Unable to create constant file name reader for %s! (%d)\n", __func__, TEST_IMAGE_FN, err);
-		goto frd_err;
-	}
-	err = OscCamSetFileNameReader(data.hFileNameReader);
-	if (err != SUCCESS)
-	{
-		OscLog(ERROR, "%s: Unable to set file name reader for camera! (%d)\n", __func__, err);
-		goto frd_err;
+		void * hFileNameReader;
+		
+		OscCall(OscFrdCreateConstantReader, &hFileNameReader, TEST_IMAGE_FN);
+		OscCall(OscCamSetFileNameReader, hFileNameReader);
 	}
 #endif /* OSC_HOST or OSC_SIM */
 
 	/* Set the camera registers to sane default values. */
-	err = OscCamPresetRegs();
-	if (err != SUCCESS)
-	{
-		OscLog(ERROR, "%s: Unable to preset camera registers! (%d)\n", __func__, err);
-		goto fb_err;
-	}
+	OscCall(OscCamPresetRegs);
 	
 	/* Set up two frame buffers with enough space for the maximum
 	 * camera resolution in cached memory. */
-	err = OscCamSetFrameBuffer(0, OSC_CAM_MAX_IMAGE_WIDTH*OSC_CAM_MAX_IMAGE_HEIGHT, data.u8FrameBuffers[0], TRUE);
-	if (err != SUCCESS)
-	{
-		OscLog(ERROR, "%s: Unable to set up first frame buffer!\n", __func__);
-		goto fb_err;
-	}
-	err = OscCamSetFrameBuffer(1, OSC_CAM_MAX_IMAGE_WIDTH*OSC_CAM_MAX_IMAGE_HEIGHT, data.u8FrameBuffers[1], TRUE);
-	if (err != SUCCESS)
-	{
-		OscLog(ERROR, "%s: Unable to set up second frame buffer!\n", __func__);
-		goto fb_err;
-	}
+	OscCall(OscCamSetFrameBuffer, 0, sizeof frameBuffers[0], frameBuffers[0], true);
+	OscCall(OscCamSetFrameBuffer, 1, sizeof frameBuffers[1], frameBuffers[1], true);
 	
 	/* Create a double-buffer from the frame buffers initilalized above.*/
-	err = OscCamCreateMultiBuffer(2, multiBufferIds);
-	if (err != SUCCESS)
-	{
-		OscLog(ERROR, "%s: Unable to set up multi buffer!\n", __func__);
-		goto mb_err;
-	}
+	OscCall(OscCamCreateMultiBuffer, 2, multiBufferIds);
+	OscCall(OscCamSetupPerspective, OSC_CAM_PERSPECTIVE_DEFAULT);
 	
-	err |= OscCamPerspectiveStr2Enum("DEFAULT", &data.perspective);
-	if ( err != SUCCESS)
-	{
-		OscLog(ERROR, "%s: Invalid camera perspective.\n", __func__);
-		goto per_err;
-	}
-	OscCamSetupPerspective( data.perspective);
+	OscCall(stateControl);
 	
-	return SUCCESS;
-	
-per_err:
-ipc_err:
-mb_err:
-fb_err:
-#if defined(OSC_HOST) || defined(OSC_SIM)
-frd_err:
-#endif
-dep_err:
+OscFunctionFail()
 	OscDestroy();
-	
-	return err;
-}
-
-OSC_ERR Unload()
-{
-	/******** Unload the framework module dependencies **********/
-	OscDestroy();
-	
-	return SUCCESS;
-}
+OscFunctionEnd()
 
 /*********************************************************************//*!
  * @brief Program entry
@@ -153,24 +81,9 @@ OSC_ERR Unload()
  * @param argv Command line argument strings.
  * @return 0 on success
  *//*********************************************************************/
-int main(const int argc, const char * argv[])
-{
-	OSC_ERR err = SUCCESS;
-	
-	err = init(argc, argv);
-	if (err != SUCCESS)
-	{
-		OscLog(ERROR, "%s: Initialization failed!(%d)\n", __func__, err);
-		return err;
-	}
-	OscLog(INFO, "Initialization successful!\n");
-	
-	OscLogSetConsoleLogLevel(INFO);
-	OscLogSetFileLogLevel(WARN);
-	
-	OscMark();
-	StateControl();
-	
-	Unload();
-	return 0;
+int main(int argc, char ** argv) {
+	if (mainFunction() == SUCCESS)
+		return 0;
+	else
+		return 1;
 }

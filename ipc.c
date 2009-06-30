@@ -29,11 +29,12 @@
 #include <errno.h>
 #include <stdio.h>
 
-#include "template.h"
+#include "ipc.h"
 #include "cgi/cgi.h"
 #include "mainstate.h"
 
 #define BUFFER_SIZE (1024)
+#define CGI_IMAGE_NAME "/home/httpd/image.bmp"
 
 struct argument {
 	char * key;
@@ -60,7 +61,7 @@ static char * strtrim(char * str) {
 	return str;
 }
 
-OscFunction(getHeader, char ** pHeader, char ** pBuffer)
+OscFunction(static readHeader, char ** pBuffer, char ** pHeader)
 	char * newline = strchr(*pBuffer, '\n');
 	OscAssert_m(newline != NULL, "No newline found.");
 	
@@ -69,7 +70,7 @@ OscFunction(getHeader, char ** pHeader, char ** pBuffer)
 	*pBuffer = newline + 1;
 OscFunctionEnd()
 
-OscFunction(getArgument, char ** pKey, char ** pValue, char ** pBuffer)
+/*OscFunction(static readArgument, char ** pBuffer, char ** pKey, char ** pValue)
 	char * newline, * colon;
 	
 	newline = strchr(*pBuffer, '\n');
@@ -83,18 +84,62 @@ OscFunction(getArgument, char ** pKey, char ** pValue, char ** pBuffer)
 	*pKey = strtrim(*pBuffer);
 	*pValue = strtrim(colon + 1);
 	*pBuffer = newline + 1;
+OscFunctionEnd()*/
+
+OscFunction(static writeArgument, char ** pBuffer, size_t * pBufferSize, char * pKey, char * pValue)
+	int n = snprintf(*pBuffer, *pBufferSize, "%s: %s\n", pKey, pValue);
+	
+	OscAssert_m(n < *pBufferSize, "No buffer space left.");
+	
+	*pBuffer += n;
+	*pBufferSize -= n;
 OscFunctionEnd()
 
-OscFunction(processRequest, char ** pResponse, char * request)
+OscFunction(static processRequest, char ** pResponse, char * request, struct MainState * mainState)
 	static char buffer[1024];
+	char * pNext = buffer;
+	size_t remaining = sizeof buffer;
 	char * header;
 	
-	OscCall(getHeader, &header, &request);
+	OscCall(readHeader, &request, &header);
 	OscMark_m("Header: %s", header);
 	if (strcmp(header, "SetOptions") == 0) {
 	
-	} else if (false) {
-	
+	} else if (strcmp(header, "GetImage") == 0) {
+		if (mainState->imageInfo.type != ImageType_none) {
+			char numBuf[32]; // FIXME: writeArgument should somehow be extended to allow number conversions and such.
+			char * pEnumBuf = NULL; // FIXME: ditto.
+			struct OSC_PICTURE pic = {
+				.data = mainState->imageInfo.data,
+				.width = mainState->imageInfo.width,
+				.height = mainState->imageInfo.height,
+			};
+			
+			if (mainState->imageInfo.type == ImageType_debayered)
+				pic.type = OSC_PICTURE_BGR_24;
+			else
+				pic.type = OSC_PICTURE_GREYSCALE;
+			
+			OscCall(OscBmpWrite, &pic, CGI_IMAGE_NAME);
+			
+			OscCall(writeArgument, &pNext, &remaining, "path", CGI_IMAGE_NAME);
+			
+			writeArgument(&pNext, &remaining, "path", CGI_IMAGE_NAME);
+			
+			snprintf(numBuf, sizeof numBuf, "%d", mainState->imageInfo.width);
+			writeArgument(&pNext, &remaining, "width", numBuf);
+			
+			snprintf(numBuf, sizeof numBuf, "%d", mainState->imageInfo.height);
+			writeArgument(&pNext, &remaining, "height", numBuf);
+			
+			if (mainState->imageInfo.type == ImageType_gray) {
+				pEnumBuf = "gray";
+			} else if (mainState->imageInfo.type == ImageType_raw) {
+				pEnumBuf = "raw";
+			} else if (mainState->imageInfo.type == ImageType_raw) {
+				pEnumBuf = "debayered";
+			}
+		}
 	}
 	
 //	sprintf(buffer, sizeof buffer, "Header: %s", header);
@@ -116,15 +161,14 @@ enum ipcState {
  * @param pMainState Initalized HSM main state variable.
  * @return 0 on success or an appropriate error code.
  *//*********************************************************************/
-OscFunction(handleIpcRequests, MainState * pMainState)
+OscFunction(handleIpcRequests, struct MainState * mainState)
 	static enum ipcState state = ipcState_uninitialized;
 	static int socketFd;
 	static int fd;
-	static uint8_t buffer[BUFFER_SIZE];
-	static uint8_t * pNext;
+	static char buffer[BUFFER_SIZE];
+	static char * pNext;
 	static size_t remaining;
 	
-	usleep(500000);
 	OscMark_m("state: %d", state);
 	
 	if (state == ipcState_uninitialized) {
@@ -176,7 +220,8 @@ OscFunction(handleIpcRequests, MainState * pMainState)
 		} else if (numRead < 0) {
 			OscAssert_m(errno == EAGAIN, "Error while reading from the IPC connection: %s", strerror(errno));
 		} else {
-			OscCall(processRequest, pNext, buffer);
+			*pNext = 0;
+			OscCall(processRequest, &pNext, buffer, mainState);
 			
 			pNext = buffer;
 			remaining = strlen(pNext);
