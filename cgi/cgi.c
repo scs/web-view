@@ -54,7 +54,12 @@ OscFunction(copyAll, int outFd, int inFd)
 			break;
 		
 		do {
-			num = write(outFd, buffer, remaining);
+			// FIXME: For some reason, I can't seem to get data to boa with write() ...
+			if (outFd == 1) {
+				num = fwrite(buffer, 1, remaining, stdout);
+			} else {
+				num = write(outFd, buffer, remaining);
+			}
 			
 			pNext += num;
 			remaining -= num;

@@ -28,6 +28,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "ipc.h"
 #include "cgi/cgi.h"
@@ -78,21 +79,21 @@ OscFunction(static readHeader, char ** pBuffer, char ** pHeader)
 	*pBuffer = newline + 1;
 OscFunctionEnd()
 
-/*OscFunction(static readArgument, char ** pBuffer, char ** pKey, char ** pValue)
+OscFunction(static readArgument, char ** pBuffer, char ** pKey, char ** pValue)
 	char * newline, * colon;
 	
 	newline = strchr(*pBuffer, '\n');
 	OscAssert_m(newline != NULL, "No newline found.");
 	*newline = 0;
 	
-	colon = strchr(*pBuffer, 0);
+	colon = strchr(*pBuffer, ':');
 	OscAssert_m(colon != NULL, "No colon found.");
 	*colon = 0;
 		
 	*pKey = strtrim(*pBuffer);
 	*pValue = strtrim(colon + 1);
 	*pBuffer = newline + 1;
-OscFunctionEnd()*/
+OscFunctionEnd()
 
 OscFunction(static writeArgument, char ** pBuffer, size_t * pBufferSize, char * pKey, char * pValue)
 	int n = snprintf(*pBuffer, *pBufferSize, "%s: %s\n", pKey, pValue);
@@ -109,21 +110,45 @@ OscFunction(static processRequest, char ** pResponse, char * request, struct Mai
 	size_t remaining = sizeof buffer;
 	char * header;
 	
+	*buffer = 0;
 	OscCall(readHeader, &request, &header);
-	OscMark_m("Header: %s", header);
-	if (strcmp(header, "SetOptions") == 0) {
 	
+	if (strcmp(header, "SetOptions") == 0) {
+		until (*request == 0) {
+			char * key, * value;
+			
+			OscCall(readArgument, &request, &key, &value);
+			if (strcmp(key, "exposureTime") == 0) {
+				mainState->options.exposureTime = strtol(value, NULL, 10);
+			} else if (strcmp(key, "colorType") == 0) {
+				if (strcmp(value, "none") == 0)
+					mainState->options.colorType = ColorType_none;
+				else if (strcmp(value, "gray") == 0)
+					mainState->options.colorType = ColorType_gray;
+				else if (strcmp(value, "raw") == 0)
+					mainState->options.colorType = ColorType_raw;
+				else if (strcmp(value, "debayered") == 0)
+					mainState->options.colorType = ColorType_debayered;
+				else
+					OscFail_m("Unknown value '%s' for argument '%s' of command '%s'.", value, key, header);
+			} else {
+				OscFail_m("Unknown argument '%s' for command '%s'.", key, header);
+			}
+			
+			throwEvent(mainState, MainStateEvent_ipcSetOptions);
+		}
 	} else if (strcmp(header, "GetImage") == 0) {
-		if (mainState->imageInfo.type != ImageType_none) {
-			char numBuf[32]; // FIXME: writeArgument should somehow be extended to allow number conversions and such.
-			char * pEnumBuf = NULL; // FIXME: ditto.
+		char numBuf[32]; // FIXME: writeArgument should somehow be extended to allow number conversions and such.
+		char * pEnumBuf = NULL; // FIXME: ditto.
+			
+		if (mainState->imageInfo.colorType != ColorType_none) {
 			struct OSC_PICTURE pic = {
 				.data = mainState->imageInfo.data,
 				.width = mainState->imageInfo.width,
 				.height = mainState->imageInfo.height,
 			};
 			
-			if (mainState->imageInfo.type == ImageType_debayered)
+			if (mainState->imageInfo.colorType == ColorType_debayered)
 				pic.type = OSC_PICTURE_BGR_24;
 			else
 				pic.type = OSC_PICTURE_GREYSCALE;
@@ -131,21 +156,28 @@ OscFunction(static processRequest, char ** pResponse, char * request, struct Mai
 			OscCall(OscBmpWrite, &pic, CGI_IMAGE_NAME);
 			
 			OscCall(writeArgument, &pNext, &remaining, "path", CGI_IMAGE_NAME);
-			
-			snprintf(numBuf, sizeof numBuf, "%d", mainState->imageInfo.width);
-			OscCall(writeArgument, &pNext, &remaining, "width", numBuf);
-			
-			snprintf(numBuf, sizeof numBuf, "%d", mainState->imageInfo.height);
-			OscCall(writeArgument, &pNext, &remaining, "height", numBuf);
-			
-			if (mainState->imageInfo.type == ImageType_gray) {
-				pEnumBuf = "gray";
-			} else if (mainState->imageInfo.type == ImageType_raw) {
-				pEnumBuf = "raw";
-			} else if (mainState->imageInfo.type == ImageType_raw) {
-				pEnumBuf = "debayered";
-			}
 		}
+		
+		snprintf(numBuf, sizeof numBuf, "%d", mainState->imageInfo.width);
+		OscCall(writeArgument, &pNext, &remaining, "width", numBuf);
+		
+		snprintf(numBuf, sizeof numBuf, "%d", mainState->imageInfo.height);
+		OscCall(writeArgument, &pNext, &remaining, "height", numBuf);
+		
+		snprintf(numBuf, sizeof numBuf, "%d", mainState->imageInfo.exposureTime);
+		OscCall(writeArgument, &pNext, &remaining, "exposureTime", numBuf);
+		
+		if (mainState->imageInfo.colorType == ColorType_none) {
+			pEnumBuf = "none";
+		} else if (mainState->imageInfo.colorType == ColorType_gray) {
+			pEnumBuf = "gray";
+		} else if (mainState->imageInfo.colorType == ColorType_raw) {
+			pEnumBuf = "raw";
+		} else if (mainState->imageInfo.colorType == ColorType_debayered) {
+			pEnumBuf = "debayered";
+		}
+		
+		OscCall(writeArgument, &pNext, &remaining, "colorType", pEnumBuf);
 	}
 	
 //	sprintf(buffer, sizeof buffer, "Header: %s", header);
@@ -209,6 +241,9 @@ OscFunction(handleIpcRequests, struct MainState * mainState)
 		if (fd < 0) {
 			OscAssert_m(errno == EAGAIN, "Error accepting a connection: %s", strerror(errno));
 		} else {
+			int err = fcntl(fd, F_SETFL, O_NONBLOCK);
+			OscAssert_m(err == 0, "Error setting O_NONBLOCK: %s", strerror(errno));
+
 			pNext = buffer;
 			remaining = BUFFER_SIZE;
 			state = ipcState_recieving;
@@ -217,7 +252,9 @@ OscFunction(handleIpcRequests, struct MainState * mainState)
 		ssize_t numRead;
 		
 		OscAssert_m(remaining > 0, "No buffer space left.");
+		OscMark_m("read(%d, %p, %d)", fd, buffer + BUFFER_SIZE - remaining, remaining);
 		numRead = read(fd, buffer + BUFFER_SIZE - remaining, remaining);
+		OscMark_m("numRead: %d", numRead);
 		
 		if (numRead > 0) {
 			// We got some data.
@@ -228,18 +265,16 @@ OscFunction(handleIpcRequests, struct MainState * mainState)
 		} else {
 			*pNext = 0;
 			OscCall(processRequest, &pNext, buffer, mainState);
-			
-		//	pNext = buffer;
+			OscMark_m("%s", pNext);
 			remaining = strlen(pNext);
 			state = ipcState_sending;
 		}
 	} else if (state == ipcState_sending) {
-		OscMark();
 		if (remaining > 0) {
 			ssize_t numWritten;
-			OscMark();
+			
 			numWritten = write(fd, pNext, remaining);
-			OscMark();
+			
 			if (numWritten > 0) {
 				// We've written some data.
 				pNext += numWritten;OscMark();
