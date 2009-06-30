@@ -34,7 +34,15 @@
 #include "mainstate.h"
 
 #define BUFFER_SIZE (1024)
-#define CGI_IMAGE_NAME "/home/httpd/image.bmp"
+
+#ifdef OSC_HOST
+//#define HTTP_DIR "/var/www/"
+#define HTTP_DIR ""
+#else
+#define HTTP_DIR "/home/httpd/"
+#endif
+
+#define CGI_IMAGE_NAME HTTP_DIR "image.bmp"
 
 struct argument {
 	char * key;
@@ -124,13 +132,11 @@ OscFunction(static processRequest, char ** pResponse, char * request, struct Mai
 			
 			OscCall(writeArgument, &pNext, &remaining, "path", CGI_IMAGE_NAME);
 			
-			writeArgument(&pNext, &remaining, "path", CGI_IMAGE_NAME);
-			
 			snprintf(numBuf, sizeof numBuf, "%d", mainState->imageInfo.width);
-			writeArgument(&pNext, &remaining, "width", numBuf);
+			OscCall(writeArgument, &pNext, &remaining, "width", numBuf);
 			
 			snprintf(numBuf, sizeof numBuf, "%d", mainState->imageInfo.height);
-			writeArgument(&pNext, &remaining, "height", numBuf);
+			OscCall(writeArgument, &pNext, &remaining, "height", numBuf);
 			
 			if (mainState->imageInfo.type == ImageType_gray) {
 				pEnumBuf = "gray";
@@ -223,7 +229,7 @@ OscFunction(handleIpcRequests, struct MainState * mainState)
 			*pNext = 0;
 			OscCall(processRequest, &pNext, buffer, mainState);
 			
-			pNext = buffer;
+		//	pNext = buffer;
 			remaining = strlen(pNext);
 			state = ipcState_sending;
 		}

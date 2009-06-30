@@ -230,12 +230,14 @@ OscFunction(static mainStateInit, struct MainState * me)
 OscFunctionEnd()
 
 OscFunction(stateControl)
-	struct MainState mainState = { };
+	static struct MainState mainState;
+	
+//	mainState = (struct MainState) { }; 
+	memset(&mainState, 0, sizeof mainState); // The variant above overwrites memory beyond the structure.
 	
 	/* Setup main state machine */
 	OscCall(mainStateInit, &mainState);
 	OscCall(OscSimInitialize);
-		
 	/*----------- infinite main loop */
 	loop {
 		// prepare next capture
@@ -245,7 +247,6 @@ OscFunction(stateControl)
 		/*----------- wait for captured picture */
 		loop {
 			OscCall(handleIpcRequests, &mainState);
-			usleep(500000);
 			
 			OscCall(OscCamReadPicture, OSC_CAM_MULTI_BUFFER, &mainState.pCurrentImage, 0, 1);
 			

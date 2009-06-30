@@ -55,9 +55,10 @@ OscFunction(static mainFunction)
 		OscCall(OscCamSetFileNameReader, hFileNameReader);
 	}
 #endif /* OSC_HOST or OSC_SIM */
-
+	
 	/* Set the camera registers to sane default values. */
 	OscCall(OscCamPresetRegs);
+	OscCall(OscCamSetAreaOfInterest, 0, 0, OSC_CAM_MAX_IMAGE_WIDTH, OSC_CAM_MAX_IMAGE_HEIGHT);
 	
 	/* Set up two frame buffers with enough space for the maximum
 	 * camera resolution in cached memory. */
