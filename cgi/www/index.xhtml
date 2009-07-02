@@ -70,30 +70,69 @@
 				<span lang="de">Optionen</span>
 				<span lang="en">Options</span>
 			</h3>
-			<p>
-				<div class="input" name="colorType" type="radio" value="debayered">Farbbild</div>
-				<div class="input" name="colorType" type="radio" value="raw">Sensorbild</div>
+			<p id="colorType">
+				<div class="input" name="colorType" type="radio" value="debayered">
+					<span lang="de">Farbbild</span>
+					<span lang="en">Color image</span>
+				</div>
+				<div class="input" name="colorType" type="radio" value="raw">
+					<span lang="de">Sensorbild</span>
+					<span lang="en">Sensor image</span>
+				</div>
 			</p>
 			<p>
-				<div class="input" name="exposureTime" type="slider" value="1 1000 log">Belichtungszeit:</div> ms
+				<div class="input" name="exposureTime" type="slider" value="1 1000 log">
+					<span lang="de">Belichtungszeit:</span>
+					<span lang="en">Exposure time:</span>
+				</div> ms
 			</p>
 		</div>
 		<div id="info-box" class="big-box">
 			<div class="split">
 				<div>
 					<div>
-						<h3>Bild-Informationen</h3>
-						<p>Bildgrösse: <span id="width" />×<span id="height" /> Pixel</p>
-						<p>Farbmodus: <span id="colorType" /></p>
-						<p>Belichtungszeit: <span id="exposureTime" /> ms</p>
+						<h3>
+							<span lang="de">Bild-Informationen</span>
+							<span lang="en">Image information</span>
+						</h3>
+						<p>
+							<span lang="de">Bildgrösse:</span>
+							<span lang="en">Image size:</span>
+							<span id="width" />×<span id="height" /> Pixel
+						</p>
+						<p>
+							<span lang="de">Farbmodus:</span>
+							<span lang="en">Color mode:</span>
+							<span id="colorType" />
+						</p>
+						<p>
+							<span lang="de">Belichtungszeit:</span>
+							<span lang="en">Exposure time:</span>
+							<span id="exposureTime" /> ms
+						</p>
 					</div>
 				</div>
 				<div>
 					<div>
-						<h3>Kamera-Informationen</h3>
-						<p>Kamera-Modell: <span id="cameraModel" /></p>
-						<p>Sensor: <span id="imageSensor" /></p>
-						<p>µClinux-Version: <span id="uClinuxVersion" /></p>
+						<h3>
+							<span lang="de">Kamera-Informationen</span>
+							<span lang="en">Camera information</span>
+						</h3>
+						<p>
+							<span lang="de">Kamera-Modell:</span>
+							<span lang="en">Camera model:</span>
+							<span id="cameraModel" />
+						</p>
+						<p>
+							<span lang="de">Sensortyp:</span>
+							<span lang="en">Sensor type:</span>
+							<span id="imageSensor" />
+						</p>
+						<p>
+							<span lang="de">µClinux-Version:</span>
+							<span lang="en">µClinux version:</span>
+							<span id="uClinuxVersion" />
+						</p>
 					</div>
 				</div>
 			</div>
