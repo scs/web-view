@@ -244,6 +244,14 @@ var outputValueHooks = {
 			return "8 bit grayscale";
 		else if (value == "debayered")
 			return "8 bit RGB";
+	},
+	imageSensor: function (value) {
+		if (value == "Color")
+			$("#colorType-section").show();
+		else
+			$("#colorType-section").hide();
+		
+		return value;
 	}
 };
 

@@ -73,7 +73,6 @@ Msg const * mainState_cameraColor(Hsm * hsm, Msg const * msg) {
 	struct MainState * mainState = containerOf(hsm, struct MainState, super);
 	
 	if (msg->evt == MainStateEvent_ipcSetOptions) {
-		OscMark_m("%d", mainState->options.colorType);
 		if (mainState->options.colorType == ColorType_raw) {
 			STATE_TRAN(mainState, &mainState->cameraColor_captureRaw);
 		} else if (mainState->options.colorType == ColorType_debayered) {
