@@ -32,7 +32,7 @@ endif
 APP_NAME := web-view
 
 # Name of the directory the application should be deployed to on the target.
-DEPLOY_DIR := /tmp/
+DEPLOY_DIR := /mnt/app/
 
 # Binary executables to generate.
 PRODUCTS := app cgi/cgi
