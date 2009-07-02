@@ -118,6 +118,8 @@ OscFunction(static processRequest, char ** pResponse, char * request, struct Mai
 			char * key, * value;
 			
 			OscCall(readArgument, &request, &key, &value);
+			OscMark_m("%s: %s", key, value);
+		
 			if (strcmp(key, "exposureTime") == 0) {
 				mainState->options.exposureTime = strtol(value, NULL, 10);
 			} else if (strcmp(key, "colorType") == 0) {
@@ -178,6 +180,14 @@ OscFunction(static processRequest, char ** pResponse, char * request, struct Mai
 		}
 		
 		OscCall(writeArgument, &pNext, &remaining, "colorType", pEnumBuf);
+	} else if (strcmp(header, "GetSystemInfo") == 0) {
+		struct OscSystemInfo * pInfo;
+		
+		OscCall(OscCfgGetSystemInfo, &pInfo);
+		
+		OscCall(writeArgument, &pNext, &remaining, "cameraModel", pInfo->hardware.board.revision);
+		OscCall(writeArgument, &pNext, &remaining, "imageSensor", pInfo->hardware.imageSensor.hasBayernPattern ? "Color" : "Grayscale");
+		OscCall(writeArgument, &pNext, &remaining, "uClinuxVersion", "v1.2-p1");
 	}
 	
 //	sprintf(buffer, sizeof buffer, "Header: %s", header);

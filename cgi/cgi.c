@@ -54,12 +54,7 @@ OscFunction(copyAll, int outFd, int inFd)
 			break;
 		
 		do {
-			// FIXME: For some reason, I can't seem to get data to boa with write() ...
-			if (outFd == 1) {
-				num = fwrite(buffer, 1, remaining, stdout);
-			} else {
-				num = write(outFd, buffer, remaining);
-			}
+			num = write(outFd, buffer, remaining);
 			
 			pNext += num;
 			remaining -= num;
@@ -73,6 +68,7 @@ OscFunction(processRequest)
 	printf("Status: 200 OK\n");
 	printf("Content-Type: text/plain\n");
 	printf("\n");
+	fflush(stdout);
 	
 	fd = socket(AF_UNIX, SOCK_STREAM, 0);
 	OscAssert_m(fd >= 0, "Error creating the socket: %s", strerror(errno));

@@ -18,6 +18,11 @@
 		<script src="js/jquery.form-2.28.js" />
 		<script src="js/functions.js" />
 		<script type="text/javascript"><![CDATA[
+			var inputValues = {
+				exposureTime: 50,
+				colorType: "debayered"
+			};
+				
 			$(function () {
 				// Set the language to what is given by ?lang=<language>, defaulting to german.
 				setLanguage(getSearchArgs().lang || "de");
@@ -25,9 +30,7 @@
 				buildControls();
 				// Call the function that updates in- and output and eventually calls itself.
 				updateCycle();
-				
-				$()
-			})
+			});
 		]]></script>
 	</head>
 	<body>
@@ -68,8 +71,8 @@
 				<span lang="en">Options</span>
 			</h3>
 			<p>
-				<div class="input" name="imagetype" type="radio" value="sensor">Sensorbild</div>
-				<div class="input" name="imagetype" type="radio" value="color">Farbbild</div>
+				<div class="input" name="colorType" type="radio" value="debayered">Farbbild</div>
+				<div class="input" name="colorType" type="radio" value="raw">Sensorbild</div>
 			</p>
 			<p>
 				<div class="input" name="exposureTime" type="slider" value="1 1000 log">Belichtungszeit:</div> ms
@@ -80,16 +83,17 @@
 				<div>
 					<div>
 						<h3>Bild-Informationen</h3>
-						<p>Bildgrösse: <span id="ImageSize" /></p>
-						<p>Farbmodus: <span id="ImageSize" /></p>
+						<p>Bildgrösse: <span id="width" />×<span id="height" /> Pixel</p>
+						<p>Farbmodus: <span id="colorType" /></p>
+						<p>Belichtungszeit: <span id="exposureTime" /> ms</p>
 					</div>
 				</div>
 				<div>
 					<div>
 						<h3>Kamera-Informationen</h3>
-						<p>Kamera-Modell: <span id="ImageSize" /></p>
-						<p>Sensor: <span id="ImageSize" /></p>
-						<p>µClinux-Version: <span id="ImageSize" /></p>
+						<p>Kamera-Modell: <span id="cameraModel" /></p>
+						<p>Sensor: <span id="imageSensor" /></p>
+						<p>µClinux-Version: <span id="uClinuxVersion" /></p>
 					</div>
 				</div>
 			</div>

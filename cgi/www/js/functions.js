@@ -85,18 +85,41 @@ function buildControls() {
 	var ws = $(document.createTextNode(" "));
 	
 	inputs.filter("[type=checkbox], [type=radio]").each(function () {
-		var id = $(this).attr("name") + "+" + $(this).attr("value");
+		var name = $(this).attr("name")
+		var value = $(this).attr("value")
+		var id = name + "--" + $(this).attr("value");
 		var label = createElement("label", { "for" : id }, $(this).contents());
 		var elem = createElement("input", {
-			"name" : $(this).attr("name"),
+			"name" : name,
 			"type" : $(this).attr("type"),
+			"value" : $(this).attr("value"),
 			"id" : id
 		});
 		
-		label.addClass("label-after");
-		
 		$(this).after(label);
 		$(this).replaceWith(elem);
+		
+		label.addClass("label-after");
+		elem.click(function () {
+			var elem = $(this);
+			var type = elem.attr("type");
+			var value;
+			
+			if (type == "checkbox")
+				if (elem.length == 1)
+					value = (elem.fieldValue().length != 0).toString();
+				else
+					value = elem.fieldValue().join(" ");
+			else if (type == "radio")
+				value = elem.fieldValue().join(" ");
+			else
+				value = elem.fieldValue()[0];
+			
+			inputValues[elem.attr("name")] = value;
+		});
+		
+		if (inputValues[name] && $.inArray(value, inputValues[name].split(" ")) != -1)
+			elem.attr("checked", "checked");
 	});
 	
 	inputs.filter("[type=slider]").each(function () {
@@ -133,9 +156,8 @@ function buildControls() {
 				else
 					x = x * (b - a) + a;
 				
+				inputValues[$(this).attr("name")] = x.toFixed(0);
 				value.text(x.toPrecision2(2));
-				
-				inputValues[$(this).attr("name")] = x;
 			}
 		});
 	});
@@ -214,7 +236,16 @@ function parseValues(data) {
 	return obj;
 }
 
-var inputValues = { };
+var outputValueHooks = {
+	colorType: function (value) {
+		if (value == "gray")
+			return "8 bit grayscale";
+		else if (value == "raw")
+			return "8 bit grayscale";
+		else if (value == "debayered")
+			return "8 bit RGB";
+	}
+};
 
 function exchangeState(header, data, onLoad, onError) {
 	$.ajax({
@@ -305,7 +336,17 @@ function updateCycle() {
 		stateControl.pullState("offline");
 		
 		$(document).oneTime("0.5s", function () {
-			exchangeState("GetImage", { }, online, offline);
+			exchangeState("GetSystemInfo", { }, function (data) {
+				$.each(data, function (key, value) {
+					function id(value) {
+						return value;
+					};
+					
+					$("#" + key).text((outputValueHooks[key] || id)(value));
+				});
+				
+				online();
+			}, offline);
 		});
 	}
 	
@@ -317,6 +358,14 @@ function updateCycle() {
 				$(this).attr("id", "image");
 				$("#image").replaceWith(this);
 				
+				$.each(data, function (key, value) {
+					function id(value) {
+						return value;
+					};
+					
+					$("#" + key).text((outputValueHooks[key] || id)(value));
+				})
+				
 				// Close the loop.
 				online();
 			}, function (event) {
@@ -324,16 +373,20 @@ function updateCycle() {
 				offline();
 			});
 			
-			if (data.exposureTime != inputValues.exposureTime) {
+			if (data.exposureTime != inputValues.exposureTime)
 				exchangeState("SetOptions", {
 					exposureTime: inputValues.exposureTime
 				});
-			}
+			
+			if (data.colorType != inputValues.colorType)
+				exchangeState("SetOptions", {
+					colorType: inputValues.colorType
+				});
 		}, function (request, status) {
 		//	console.log(status);
 			offline();
 		});
 	}
 	
-	online();
+	offline();
 }
