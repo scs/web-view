@@ -75,10 +75,8 @@ Msg const * mainState_cameraColor(Hsm * hsm, Msg const * msg) {
 	if (msg->evt == MainStateEvent_ipcSetOptions) {
 		OscMark_m("%d", mainState->options.colorType);
 		if (mainState->options.colorType == ColorType_raw) {
-			OscMark_m();
 			STATE_TRAN(mainState, &mainState->cameraColor_captureRaw);
 		} else if (mainState->options.colorType == ColorType_debayered) {
-			OscMark_m();
 			STATE_TRAN(mainState, &mainState->cameraColor_captureDebayered);
 		}
 		

@@ -187,7 +187,7 @@ OscFunction(static processRequest, char ** pResponse, char * request, struct Mai
 		
 		OscCall(writeArgument, &pNext, &remaining, "cameraModel", pInfo->hardware.board.revision);
 		OscCall(writeArgument, &pNext, &remaining, "imageSensor", pInfo->hardware.imageSensor.hasBayernPattern ? "Color" : "Grayscale");
-		OscCall(writeArgument, &pNext, &remaining, "uClinuxVersion", "v1.2-p1");
+		OscCall(writeArgument, &pNext, &remaining, "uClinuxVersion", pInfo->software.uClinux.version);
 	}
 	
 //	sprintf(buffer, sizeof buffer, "Header: %s", header);
