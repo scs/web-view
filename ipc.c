@@ -234,6 +234,10 @@ OscFunction(handleIpcRequests, struct MainState * mainState)
 		err = bind(socketFd, (struct sockaddr *) &addr, SUN_LEN(&addr));
 		OscAssert_m(err == 0, "Error binding the socket: %s", strerror(errno));
 		
+		err = chmod(addr.sun_path, SERV_SOCKET_PERMISSIONS);
+		OscAssert_m(err >= 0, "Unable to set access permissions of "
+					"socket file node \"%s\"! (%s)", addr.sun_path, strerror(errno));
+
 		err = listen(socketFd, 5);
 		OscAssert_m(err == 0, "Error listening on the socket: %s", strerror(errno));
 		
