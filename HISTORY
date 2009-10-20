@@ -1,3 +1,7 @@
++ Release v2.0-p1
+Fixed elusive bug in IPC part, causing accept() to return with the error "Invalid Parameter" depending on current stack setup.
+
+
 + Release v2.0
 Reworked web interface (using JQuery now)
 Migrated to Oscar framework version 2.0
