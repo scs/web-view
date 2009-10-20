@@ -244,8 +244,8 @@ OscFunction(handleIpcRequests, struct MainState * mainState)
 		state = ipcState_listening;
 	} else if (state == ipcState_listening) {
 		{
-			unsigned int remoteAddrLen;
 			struct sockaddr remoteAddr;
+			unsigned int remoteAddrLen = sizeof(struct sockaddr);
 			
 			fd = accept(socketFd, &remoteAddr, &remoteAddrLen);
 		}
