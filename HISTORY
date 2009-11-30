@@ -1,3 +1,7 @@
++ Release v2.0-p2
+Removed LGPL headers to release it without copy-left.
+
+
 + Release v2.0-p1
 Fixed elusive bug in IPC part, causing accept() to return with the error "Invalid Parameter" depending on current stack setup.
 
