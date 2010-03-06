@@ -1,3 +1,7 @@
++ Release v2.0-p3
+Fixed a bug causing web-view to exit with status -6 (TIMEOUT) when using the most recent version of Oscar
+
+
 + Release v2.0-p2
 Removed LGPL headers to release it without copy-left.
 
