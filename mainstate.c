@@ -128,12 +128,15 @@ OscFunction(stateControl)
 		// wait for captured picture
 		loop {
 			// procress CGI request
-			OscCall(handleIpcRequests, &mainState);
+			OscCall_is(handleIpcRequests, &mainState);
 			
-			OscCall(OscCamReadPicture, OSC_CAM_MULTI_BUFFER, &mainState.pCurrentImage, 0, 1);
+			OscCall_is(OscCamReadPicture, OSC_CAM_MULTI_BUFFER, &mainState.pCurrentImage, 0, 1);
 			
 			if (OscLastStatus() == SUCCESS)
 				break;
+			
+			if(OscLastStatus() != -ETIMEOUT)
+			  OscFail_es(OscLastStatus());
 		}
 		
 		// Build up image information sent to the web interface along the image.
