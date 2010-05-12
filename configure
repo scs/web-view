@@ -20,7 +20,9 @@ get_config() {
 	# $1: the name of the configuration file
 	# $2: name of the configuration variable
 	
-	local CONFIG_FILE=$1 NAME=$2 EXPR="s/^#?$NAME[\t ]*=[\t ]*(.*)[\t ]*$/\1/p"
+	local CONFIG_FILE=$1 
+	local NAME_LOC=$2
+	local EXPR="s/^#?$NAME_LOC[\t ]*=[\t ]*(.*)[\t ]*$/\1/p"
 	[ -e "$CONFIG_FILE" ] && sed -rn "$EXPR" < "$CONFIG_FILE" | head -n 1 || true
 }
 
@@ -114,3 +116,7 @@ mv -f "${CONF_FILE}~" "${CONF_FILE}"
 
 # Call the makefile to update according to the new configuration.
 make -C "$SCRIPT_DIR" --no-print-directory reconfigure
+
+[ -e "$SCRIPT_DIR/configure.local" ] && . "$SCRIPT_DIR/configure.local"
+
+

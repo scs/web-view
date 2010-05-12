@@ -131,11 +131,10 @@ OscFunction(static processRequest, char ** pResponse, char * request, struct Mai
 		char * pEnumBuf = NULL; // FIXME: ditto.
 			
 		if (mainState->imageInfo.colorType != ColorType_none) {
-			struct OSC_PICTURE pic = {
-				.data = mainState->imageInfo.data,
-				.width = mainState->imageInfo.width,
-				.height = mainState->imageInfo.height,
-			};
+			struct OSC_PICTURE pic;
+			pic.data = mainState->imageInfo.data;
+			pic.width = mainState->imageInfo.width;
+			pic.height = mainState->imageInfo.height;
 			
 			if (mainState->imageInfo.colorType == ColorType_debayered)
 				pic.type = OSC_PICTURE_BGR_24;
@@ -173,7 +172,7 @@ OscFunction(static processRequest, char ** pResponse, char * request, struct Mai
 		OscCall(OscCfgGetSystemInfo, &pInfo);
 		
 		OscCall(writeArgument, &pNext, &remaining, "cameraModel", pInfo->hardware.board.revision);
-		OscCall(writeArgument, &pNext, &remaining, "imageSensor", pInfo->hardware.imageSensor.hasBayernPattern ? "Color" : "Grayscale");
+		OscCall(writeArgument, &pNext, &remaining, "imageSensor", pInfo->hardware.imageSensor.hasBayernPattern ? (char*)"Color" : (char*)"Grayscale");
 		OscCall(writeArgument, &pNext, &remaining, "uClinuxVersion", pInfo->software.uClinux.version);
 	}
 	
@@ -206,7 +205,8 @@ OscFunction(handleIpcRequests, struct MainState * mainState)
 	
 	if (state == ipcState_uninitialized) {
 		int err;
-		struct sockaddr_un addr = { .sun_family = AF_UNIX };
+		struct sockaddr_un addr;
+		addr.sun_family=AF_UNIX;
 		
 		OscAssert_m(strlen(CGI_SOCKET_PATH) < sizeof (addr.sun_path), "Path too long.")
 		strcpy(addr.sun_path, CGI_SOCKET_PATH);

@@ -10,7 +10,7 @@
 #ifndef MAINSTATE_H
 #define MAINSTATE_H
 
-#include "oscar.h"
+#include <oscar.h>
 
 /*!
  * @brief Macro to throw an event to be handled by the statemachine.

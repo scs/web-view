@@ -8,6 +8,7 @@
  * code.
  */
 
+
 #include <string.h>
 #include <sched.h>
 #include <errno.h>
@@ -15,6 +16,7 @@
 #include <stdlib.h>
 
 #include "mainstate.h"
+
 
 #define TEST_IMAGE_FN "test.bmp"
 
@@ -27,7 +29,6 @@
 OscFunction(static mainFunction)
 	uint8 multiBufferIds[2] = {0, 1};
 	uint8_t frameBuffers[2][OSC_CAM_MAX_IMAGE_HEIGHT * OSC_CAM_MAX_IMAGE_WIDTH];
-	
 	/******* Create the framework **********/
 	OscCall(OscCreate, &OscModule_log, &OscModule_sup, &OscModule_bmp, &OscModule_cam, &OscModule_hsm, &OscModule_vis, &OscModule_gpio);
 	

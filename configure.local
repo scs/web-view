@@ -1,0 +1,22 @@
+
+# This script shows the necessary steps for compilation after configuring
+# the first argument is the file with the configuration (.config)
+
+
+echo ""
+echo "Configuration finished"
+echo ""
+echo "Now do the following steps to build the application:"
+
+if [ $(get_config "$CONF_FILE" "CONFIG_USE_OPENCV") == 'y' ]; then
+	echo "   $ make opencv (if it isn't built already)"
+fi
+
+echo "   $ make oscar"
+
+if [ $(get_config "$CONF_FILE" "CONFIG_USE_OSCAR_CC") == 'y' ]; then
+	echo "   $ make osc-cc"
+fi
+
+echo "   $ make"
+

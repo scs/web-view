@@ -2,7 +2,7 @@
 # are permitted in any medium without royalty. This file is offered as-is,
 # without any warranty.
 
-CONFIGS='PRIVATE_FRAMEWORK FRAMEWORK_PATH TARGET_IP ENABLE_DEBUG ENABLE_SIMULATION'
+CONFIGS='PRIVATE_FRAMEWORK FRAMEWORK_PATH TARGET_IP ENABLE_DEBUG ENABLE_SIMULATION USE_GPP_COMPILER USE_OPENCV OPENCV_PATH USE_OSCAR_CC OSCAR_CC_PATH'
 
 CONFIG_PRIVATE_FRAMEWORK() {
 	enabled() { true; }
@@ -48,3 +48,48 @@ CONFIG_ENABLE_SIMULATION() {
 	
 	[ "$1" ] && "$1"
 }
+
+CONFIG_USE_GPP_COMPILER() {
+	enabled() { true; }
+	prompt() { echo 'Use g++ compiler instead of gcc (with .cpp src files)? Say no if this is a C only project. (y/n)'; }
+	default() { echo 'n'; }
+	check() { grep -xqE 'y|n'; }
+	
+	[ "$1" ] && "$1"
+}
+
+CONFIG_USE_OPENCV() {
+	enabled() { [ "$CONFIG_USE_GPP_COMPILER" == 'y' ]; }
+	prompt() { echo 'Are you using OpenCV? (y/n)'; }
+	default() { echo 'n'; }
+	check() { grep -xqE 'y|n'; }
+	
+	[ "$1" ] && "$1"
+}
+CONFIG_OPENCV_PATH() {
+	enabled() { [ "$CONFIG_USE_OPENCV" == 'y' ]; }
+	prompt() { echo 'Enter the path to the OpenCV Library.'; }
+	default() { echo './opencv-2.x.x'; }
+	check() { grep -xqE '.+'; }
+	
+	[ "$1" ] && "$1"
+}
+
+CONFIG_USE_OSCAR_CC() {
+	enabled() { true; }
+	prompt() { echo 'Are you using Oscar Code Collection? (y/n)'; }
+	default() { echo 'n'; }
+	check() { grep -xqE 'y|n'; }
+	
+	[ "$1" ] && "$1"
+}
+CONFIG_OSCAR_CC_PATH() {
+	enabled() { [ "$CONFIG_USE_OSCAR_CC" == 'y' ]; }
+	prompt() { echo 'Enter the path to the Oscar Code Collection.'; }
+	default() { echo './osc-cc'; }
+	check() { grep -xqE '.+'; }
+	
+	[ "$1" ] && "$1"
+}
+
+

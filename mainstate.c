@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "oscar.h"
+#include <oscar.h>
 #include "mainstate.h"
 #include "ipc.h"
 
@@ -92,7 +92,7 @@ Msg const * mainState_cameraColor_captureDebayered(Hsm * hsm, Msg const * msg) {
 	if (msg->evt == MainStateEvent_camNewImage) {
 		mainState->imageInfo.colorType = ColorType_debayered;
 		
-		OscVisDebayer(mainState->pCurrentImage, mainState->imageInfo.width, mainState->imageInfo.height, 0, mainState->imageInfo.data);
+		OscVisDebayer(mainState->pCurrentImage, mainState->imageInfo.width, mainState->imageInfo.height, ROW_BGBG, mainState->imageInfo.data);
 		
 		return NULL;
 	}
