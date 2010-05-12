@@ -51,7 +51,7 @@ CONFIG_ENABLE_SIMULATION() {
 
 CONFIG_USE_GPP_COMPILER() {
 	enabled() { true; }
-	prompt() { echo 'Use g++ compiler instead of gcc (with .cpp src files)? Say no if this is a C only project. (y/n)'; }
+	prompt() { echo 'Use g++ compiler instead of gcc? Say no if this is a C only project. (y/n)'; }
 	default() { echo 'n'; }
 	check() { grep -xqE 'y|n'; }
 	

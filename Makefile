@@ -81,10 +81,8 @@ endif # '$(CONFIG_USE_OSCAR_CC)' 'y'
 
 
 ifeq '$(CONFIG_USE_GPP_COMPILER)' 'y'
-SRC_FILES := .cpp
 GCC := g++
 else
-SRC_FILES := .c
 CFLAGS += -std=gnu99
 GCC := gcc
 endif
@@ -171,20 +169,20 @@ endif
 -include build/*.d
 
 # Build targets.
-build/%_host.o: %$(SRC_FILES) $(filter-out %.d, $(MAKEFILE_LIST))
+build/%_host.o: $(filter-out %.d, $(MAKEFILE_LIST))
 	@ mkdir -p $(dir $@)
-	$(CC_host) -MD $< -o $@
+	$(CC_host) -MD $(filter $*.c $*.cpp,$($(addsuffix $(PRODUCTS), SOURCES_))) -o $@
 	@ grep -oE '[^ \\]+' < $(@:.o=.d) | sed -r '/:$$/d; s|^.*$$|$@: \0\n\0:|' > $(@:.o=.d~) && mv -f $(@:.o=.d){~,}
-build/%_target.o: %$(SRC_FILES) $(filter-out %.d, $(MAKEFILE_LIST))
+build/%_target.o: $(filter-out %.d, $(MAKEFILE_LIST))
 	@ mkdir -p $(dir $@)
-	$(CC_target) -MD $< -o $@
+	$(CC_target) -MD $(filter $*.c $*.cpp,$($(addsuffix $(PRODUCTS), SOURCES_))) -o $@
 	@ grep -oE '[^ \\]+' < $(@:.o=.d) | sed -r '/:$$/d; s|^.*$$|$@: \0\n\0:|' > $(@:.o=.d~) && mv -f $(@:.o=.d){~,}
 
 # Link targets.
 define LINK
-$(1)_host: $(patsubst %$(SRC_FILES), build/%_host.o, $(SOURCES_$(1))) $(LIBS_host)
+$(1)_host: $(patsubst %.cpp, build/%_host.o, $(patsubst %.c, build/%_host.o, $(SOURCES_$(1)))) $(LIBS_host)
 	$(LD_host) -o $$@ $$^ $(OSC_CC_LIBS_INC) -lm $(OSC_CC_LIBS_host) $(OPENCV_LIBS_host)
-$(1)_target: $(patsubst %$(SRC_FILES), build/%_target.o, $(SOURCES_$(1))) $(LIBS_target)
+$(1)_target: $(patsubst %.cpp, build/%_target.o, $(patsubst %.c, build/%_target.o, $(SOURCES_$(1)))) $(LIBS_target)
 	$(LD_target) -o $$@ $$^ $(OSC_CC_LIBS_INC) -lm -lbfdsp $(OSC_CC_LIBS_target) $(OPENCV_LIBS_target)
 endef
 $(foreach i, $(PRODUCTS), $(eval $(call LINK,$i)))
