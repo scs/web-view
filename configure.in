@@ -69,7 +69,7 @@ CONFIG_USE_OPENCV() {
 CONFIG_OPENCV_PATH() {
 	enabled() { [ "$CONFIG_USE_OPENCV" == 'y' ]; }
 	prompt() { echo 'Enter the path to the OpenCV Library.'; }
-	default() { echo './opencv-2.x.x'; }
+	default() { echo '../opencv-2.0.0'; }
 	check() { grep -xqE '.+'; }
 	
 	[ "$1" ] && "$1"
