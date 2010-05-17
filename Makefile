@@ -87,8 +87,8 @@ CFLAGS += -std=gnu99
 GCC := gcc
 endif
 
-CC_host := $(GCC) $(CFLAGS) -DOSC_HOST
-CC_target := bfin-uclinux-$(GCC) $(CFLAGS) -DOSC_TARGET
+CC_host := $(GCC) $(CFLAGS) -DOSC_HOST -D'APP_NAME="$(APP_NAME)"'
+CC_target := bfin-uclinux-$(GCC) $(CFLAGS) -DOSC_TARGET -D'APP_NAME="$(APP_NAME)"'
 LD_host := $(GCC) -fPIC
 LD_target := bfin-uclinux-$(GCC) -elf2flt="-s 1048576"
 
@@ -126,7 +126,7 @@ BINARIES := $(addsuffix _host, $(PRODUCTS)) $(addsuffix _target, $(PRODUCTS))
 
 .PHONY: all clean host target install deploy run reconfigure opencv
 all: $(BINARIES)
-	$(foreach i, $(SUB_PRODUCTS), make -C $i)
+	$(foreach i, $(SUB_PRODUCTS), make -C $i APP_NAME=$(APP_NAME))
 host target: %: $(addsuffix _%, $(PRODUCTS))
 
 opencv:

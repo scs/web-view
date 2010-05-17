@@ -12,7 +12,7 @@
 #define CGI_H_
 
 /*! @brief The path of the unix domain socket used for IPC between the application and its user interface. */
-#define CGI_SOCKET_PATH "/tmp/IPCSocket.sock"
+#define CGI_SOCKET_PATH "/tmp/IPCSocket."APP_NAME".sock"
 
 /* The parameter IDs to identify the different requests/responses. */
 enum ipcParamIds {
