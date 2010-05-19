@@ -8,7 +8,7 @@ echo "Configuration finished"
 echo ""
 echo "Now do the following steps to build the application:"
 
-if [ $(get_config "$CONF_FILE" "CONFIG_USE_OPENCV") == 'y' ]; then
+if [ $(get_config "$CONF_FILE" "CONFIG_USE_OPENCV") == 'y' ] && CONFIG_USE_OPENCV enabled; then
 	echo "   $ make opencv (if it isn't built already)"
 fi
 
