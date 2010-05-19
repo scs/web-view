@@ -61,7 +61,8 @@ OscFunction(processRequest)
 	OscAssert_m(fd >= 0, "Error creating the socket: %s", strerror(errno));
 	
 	{
-		struct sockaddr_un servaddr = { .sun_family = AF_UNIX };
+		struct sockaddr_un servaddr;
+		servaddr.sun_family = AF_UNIX;
 		
 		strncpy(servaddr.sun_path, CGI_SOCKET_PATH, sizeof servaddr.sun_path);
 		
