@@ -1,3 +1,9 @@
++ Release v2.1
+! fix bug caused by calling socket accept() with uninitialized arguments
++ move www folder one level up
++ c++ compatible
+
+
 + Release v2.0
 Reworked web interface (using JQuery now)
 Migrated to Oscar framework version 2.0
