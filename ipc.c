@@ -24,8 +24,8 @@
 #define BUFFER_SIZE (1024)
 
 #ifdef OSC_HOST
-//#define HTTP_DIR "/var/www/"
-#define HTTP_DIR ""
+#define HTTP_DIR "/var/www/"
+//#define HTTP_DIR ""
 #else
 #define HTTP_DIR "/home/httpd/"
 #endif
