@@ -82,11 +82,7 @@ OscFunction(processRequest)
 OscFunctionEnd()
 
 OscFunction(mainFunction)
-	OscCall(OscCreate, &OscModule_log);
-	
 	OscCall(processRequest);
-OscFunctionFinally()
-	OscDestroy();
 OscFunctionEnd()
 
 int main(int argc, char ** argv) {
